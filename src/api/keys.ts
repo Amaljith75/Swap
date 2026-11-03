@@ -1,0 +1,17 @@
+export const qk = {
+  me: ['me'] as const,
+  profile: (id: string) => ['profile', id] as const,
+  nearby: (p: object) => ['nearby', p] as const,
+  listing: (id: string) => ['listing', id] as const,
+  listingDistance: (id: string) => ['listing-distance', id] as const,
+  myListings: ['my-listings'] as const,
+  userListings: (id: string) => ['user-listings', id] as const,
+  offers: ['offers'] as const,
+  offer: (id: string) => ['offer', id] as const,
+  myOfferOn: (listingId: string) => ['my-offer-on', listingId] as const,
+  messages: (offerId: string) => ['messages', offerId] as const,
+  pendingCount: ['pending-count'] as const,
+  ratings: (userId: string) => ['ratings', userId] as const,
+  myRating: (offerId: string) => ['my-rating', offerId] as const,
+  blocks: ['blocks'] as const,
+};
