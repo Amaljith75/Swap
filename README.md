@@ -21,7 +21,7 @@ Built with Expo (React Native + TypeScript), and Supabase for the database, sign
 
 1. Open your project on supabase.com and go to **SQL Editor → New query**.
 2. If you ran the old cash/UPI schema in this project, first paste and run `supabase/reset_old_cash_schema.sql`. This deletes the old tables.
-3. Paste all of `supabase/migrations/0001_barter.sql` and press **Run**. It should say "Success. No rows returned".
+3. Paste all of `supabase/migrations/0001_barter.sql` and press **Run**, then do the same with `0002_harden_helpers.sql`. Each should say "Success. No rows returned". (Already done for the current project.)
 4. Go to **Authentication → Sign In / Providers → Email**:
    - Keep **Email** enabled.
    - While testing, turn **Confirm email** OFF. This lets people sign in straight away. Supabase's built-in email sender only allows a few emails per hour, so confirmation emails get stuck quickly.
@@ -33,9 +33,7 @@ Built with Expo (React Native + TypeScript), and Supabase for the database, sign
 ### 2. GitHub repo + APK build
 
 1. Create a repository on GitHub and upload this project's files to it. Do not upload `node_modules`.
-2. In the repo, go to **Settings → Secrets and variables → Actions → New repository secret** and add:
-   - `SUPABASE_URL`: your Project URL
-   - `SUPABASE_ANON_KEY`: your anon key
+2. The Supabase URL and anon key are already set in `src/lib/config.ts`. The anon key is meant to be public; row-level security protects the data. To point a build at a different project, add the GitHub secrets `SUPABASE_URL` and `SUPABASE_ANON_KEY` (Settings → Secrets and variables → Actions); they override the defaults.
 3. Go to **Actions → Build Android APK → Run workflow**. The build also runs on every push to `main`. It takes about 15–25 minutes.
 4. When it turns green, open **Releases** on the repo's main page (or the run's summary). Download `swap-<number>.apk` on your phone and install it. Android will ask you to allow installs from your browser.
 

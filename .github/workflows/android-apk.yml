@@ -20,16 +20,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check Supabase secrets
-        env:
-          URL: ${{ secrets.SUPABASE_URL }}
-          KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-        run: |
-          if [ -z "$URL" ] || [ -z "$KEY" ]; then
-            echo "::error::Add SUPABASE_URL and SUPABASE_ANON_KEY under Settings > Secrets and variables > Actions"
-            exit 1
-          fi
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22

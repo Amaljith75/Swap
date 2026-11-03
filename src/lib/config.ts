@@ -1,8 +1,15 @@
 // Product constants. Server-side limits live in the app_config table and are
 // enforced there; these values only shape the UI.
+// The anon key is public by design: it ships inside every APK, and the database's
+// row-level security is what protects data. Never put the service_role key here.
+// EXPO_PUBLIC_* env vars (or GitHub secrets in the build) override these defaults.
+const DEFAULT_SUPABASE_URL = 'https://vwkaohiukqmotwesdqvi.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3a2FvaGl1a3Ftb3R3ZXNkcXZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEzMDU0NzUsImV4cCI6MjEwNjg4MTQ3NX0.ke2fcG5Mytp7rxmutoIAEQMBHmAo04DhnAqBvbumEu0';
+
 export const env = {
-  supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
-  supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+  supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL,
+  supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY,
 };
 
 export const isSupabaseConfigured = env.supabaseUrl.length > 0 && env.supabaseAnonKey.length > 0;
