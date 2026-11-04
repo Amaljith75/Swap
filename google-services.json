@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "841433028438",
+    "project_id": "swap-9110b",
+    "storage_bucket": "swap-9110b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:841433028438:android:7e0a2300dcbdc6f651e8f7",
+        "android_client_info": {
+          "package_name": "com.swap.barter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAy7jfUIQNytchjpCTTFSpH8QHX6Zak9u8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
