@@ -2,6 +2,7 @@ import { FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-nat
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTabBarSpace } from '@/components/TabBar';
 import { useMyListings } from '@/api/listings';
 import { ItemRow } from '@/components/ItemRow';
 import { conditionLabel } from '@/lib/config';
@@ -19,6 +20,7 @@ const statusText: Record<ListingStatus, string> = {
 export default function MyItems() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tabSpace = useTabBarSpace();
   const items = useMyListings();
 
   return (
@@ -45,7 +47,7 @@ export default function MyItems() {
         <FlatList
           data={items.data}
           keyExtractor={(i) => i.id}
-          contentContainerStyle={[styles.list, { paddingBottom: 110 + insets.bottom }]}
+          contentContainerStyle={[styles.list, { paddingBottom: tabSpace }]}
           renderItem={({ item }) => (
             <ItemRow
               item={item}

@@ -5,16 +5,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNearby } from '@/api/listings';
 import { ListingCard } from '@/components/ListingCard';
+import { useTabBarSpace } from '@/components/TabBar';
 import { categories, limits } from '@/lib/config';
 import { useLocation } from '@/lib/location';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { Chip, EmptyState, ErrorView, Loading, Text } from '@/ui';
 
-const TAB_SPACE = 110;
-
 export default function Explore() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tabSpace = useTabBarSpace();
   const { status, coords, request } = useLocation();
   const [radiusKm, setRadiusKm] = useState<number>(limits.defaultRadiusKm);
   const [category, setCategory] = useState<string | null>(null);
@@ -87,7 +87,7 @@ export default function Explore() {
           />
         ))}
       </ScrollView>
-      <View style={styles.radiusRow}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.radiusRow}>
         <Ionicons name="location-outline" size={16} color={colors.textMuted} />
         <Text variant="caption" muted>
           Within
@@ -95,7 +95,7 @@ export default function Explore() {
         {limits.radiusOptionsKm.map((r) => (
           <Chip key={r} label={`${r} km`} selected={radiusKm === r} onPress={() => setRadiusKm(r)} />
         ))}
-      </View>
+      </ScrollView>
     </View>
   );
 
@@ -142,7 +142,7 @@ export default function Explore() {
       keyExtractor={(i, idx) => i?.id ?? `spacer-${idx}`}
       numColumns={2}
       columnWrapperStyle={styles.col}
-      contentContainerStyle={[styles.list, { paddingBottom: TAB_SPACE + insets.bottom }]}
+      contentContainerStyle={[styles.list, { paddingBottom: tabSpace }]}
       ListHeaderComponent={header}
       ListEmptyComponent={empty as React.ReactElement}
       renderItem={({ item }) =>
@@ -196,5 +196,5 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, color: colors.text, fontSize: 16, paddingVertical: 12 },
   chips: { gap: spacing.sm },
-  radiusRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexWrap: 'wrap' },
+  radiusRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
 });

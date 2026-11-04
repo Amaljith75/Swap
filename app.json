@@ -7,8 +7,17 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.swap.barter"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.swap.barter",
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Swap uses your approximate location to show items near you. It is never shown to other people.",
+        "NSCameraUsageDescription": "Swap needs the camera so you can photograph items.",
+        "NSPhotoLibraryUsageDescription": "Swap needs your photos so you can add pictures of items."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +31,8 @@
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
-        "CAMERA"
+        "CAMERA",
+        "POST_NOTIFICATIONS"
       ],
       "versionCode": 1,
       "softwareKeyboardLayoutMode": "resize",
@@ -58,6 +68,14 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 140,
           "backgroundColor": "#0E0E10"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#B7F34A",
+          "defaultChannel": "default"
         }
       ]
     ],

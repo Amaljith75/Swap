@@ -2,9 +2,12 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useMe } from '@/api/profiles';
+import { useTabBarSpace } from '@/components/TabBar';
 import { TrustLine } from '@/components/TrustLine';
 import { memberSince } from '@/lib/format';
+import { unregisterForPush } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
+import { currentBuild, useUpdateAvailable } from '@/lib/updates';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { Avatar, ErrorView, Loading, Screen, Text } from '@/ui';
 
@@ -41,13 +44,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 export default function Profile() {
   const router = useRouter();
   const me = useMe();
+  const tabSpace = useTabBarSpace();
+  const update = useUpdateAvailable();
 
   if (me.isLoading) return <Loading />;
   if (me.isError || !me.data) return <ErrorView error={me.error} onRetry={() => void me.refetch()} />;
   const p = me.data;
 
   return (
-    <Screen bottomInset={100}>
+    <Screen bottomInset={tabSpace}>
       <Text variant="display" style={styles.title}>
         Profile
       </Text>
@@ -76,6 +81,14 @@ export default function Profile() {
         <Row icon="shield-checkmark-outline" label="How to swap safely" onPress={() => router.push('/settings/safety')} />
         <Row icon="ban-outline" label="Blocked people" onPress={() => router.push('/settings/blocked')} />
       </Section>
+      <Section title="App">
+        <Row
+          icon="cloud-download-outline"
+          label={update.available ? 'Update available' : 'App version'}
+          value={update.available ? `Build ${update.release?.build}` : `Build ${currentBuild() || '–'}`}
+          onPress={() => router.push('/settings/update')}
+        />
+      </Section>
       <Section title="Session">
         <Row
           icon="log-out-outline"
@@ -84,7 +97,7 @@ export default function Profile() {
           onPress={() =>
             Alert.alert('Sign out?', undefined, [
               { text: 'Cancel', style: 'cancel' },
-              { text: 'Sign out', style: 'destructive', onPress: () => void supabase.auth.signOut() },
+              { text: 'Sign out', style: 'destructive', onPress: () => void unregisterForPush().finally(() => supabase.auth.signOut()) },
             ])
           }
         />

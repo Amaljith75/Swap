@@ -18,6 +18,7 @@ import { MessageBubble } from '@/components/MessageBubble';
 import { StatusBadge } from '@/components/StatusBadge';
 import { errorMessage } from '@/lib/errors';
 import { countdown } from '@/lib/format';
+import { useActiveChat } from '@/lib/notifications';
 import { describeOffer } from '@/lib/offerState';
 import { useUserId } from '@/store/session';
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -39,6 +40,11 @@ export default function OfferScreen() {
   const [draft, setDraft] = useState('');
   const now = useNow(offer.data?.status === 'completed');
   useOfferRealtime(id);
+  const setActiveChat = useActiveChat((s) => s.set);
+  useEffect(() => {
+    setActiveChat(id ?? null);
+    return () => setActiveChat(null);
+  }, [id, setActiveChat]);
 
   if (offer.isLoading) return <Loading />;
   if (offer.isError)

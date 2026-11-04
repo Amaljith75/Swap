@@ -272,4 +272,37 @@ select check_((select rating_count from profiles where id = 'aaaaaaaa-0000-0000-
               'same rater counts once (latest rating wins)');
 reset role;
 
+
+-- ---------- Notifications ----------
+set role authenticated;
+select t_as('aaaaaaaa-0000-0000-0000-000000000001');
+select expect_error($$select * from notification_queue$$, 'permission denied');
+select expect_error($$select * from push_tokens$$, 'permission denied');
+select expect_error($$select enqueue_notification(auth.uid(), 'x', 'y', '{}')$$, 'permission denied');
+select expect_error($$select publish_release(99, 'u', 'n')$$, 'permission denied');
+select register_push_token('fcm-token-for-asha-000000', 'android');
+select t_as('bbbbbbbb-0000-0000-0000-000000000002');
+insert into t_ids values ('b6', create_listing('Frisbee', '', 'sports', 'good', '', array['bbbbbbbb-0000-0000-0000-000000000002/f.jpg'], 12.98, 77.60));
+select t_as('aaaaaaaa-0000-0000-0000-000000000001');
+insert into t_ids values ('a8', create_listing('Kettle', '', 'home', 'good', '', array['aaaaaaaa-0000-0000-0000-000000000001/k.jpg'], 12.9716, 77.5946));
+select t_as('bbbbbbbb-0000-0000-0000-000000000002');
+insert into t_ids values ('o10', make_offer(id_('a8'), array[id_('b6')], 'Frisbee for the kettle?'));
+reset role;
+select check_((select count(*) from notification_queue where user_id = 'aaaaaaaa-0000-0000-0000-000000000001') = 2, 'owner gets new-offer + message notifications');
+select check_((select count(*) from notification_queue where user_id = 'bbbbbbbb-0000-0000-0000-000000000002') = 0, 'no notifications for users without a device');
+set role authenticated;
+select t_as('aaaaaaaa-0000-0000-0000-000000000001');
+select respond_offer(id_('o10'), 'decline');
+reset role;
+select check_((select count(*) from notification_queue) = 2, 'actor is not notified about own decline');
+select check_(publish_release(5, 'https://example/swap-5.apk', 'Build 5'), 'first release recorded');
+select check_((select count(*) from notification_queue where user_id is null) = 0, 'first release is not announced');
+select check_(publish_release(6, 'https://example/swap-6.apk', 'Build 6'), 'newer release recorded');
+select check_((select count(*) from notification_queue where user_id is null and data->>'type' = 'update') = 1, 'newer release announced to everyone');
+select check_(not publish_release(6, 'x', 'y'), 'same build is ignored');
+set role anon;
+select check_((select value->>'build' from app_config where key = 'latest_release') = '6', 'anon can read latest release');
+select check_((select count(*) from app_config) = 1, 'anon sees only the release row');
+reset role;
+
 \echo ALL TESTS PASSED

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTabBarSpace } from '@/components/TabBar';
 import { useOffers } from '@/api/offers';
 import { OfferRow } from '@/components/OfferRow';
 import { useUserId } from '@/store/session';
@@ -13,6 +14,7 @@ type Tab = 'active' | 'past';
 export default function OffersScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const tabSpace = useTabBarSpace();
   const me = useUserId();
   const offers = useOffers();
   const [tab, setTab] = useState<Tab>('active');
@@ -49,7 +51,7 @@ export default function OffersScreen() {
         <FlatList
           data={rows}
           keyExtractor={(o) => o.id}
-          contentContainerStyle={[styles.list, { paddingBottom: 110 + insets.bottom }]}
+          contentContainerStyle={[styles.list, { paddingBottom: tabSpace }]}
           renderItem={({ item }) => <OfferRow offer={item} me={me!} onPress={() => router.push(`/offer/${item.id}`)} />}
           ListEmptyComponent={
             tab === 'active' ? (

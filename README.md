@@ -106,6 +106,8 @@ createdb swaptest
 psql -d swaptest -c 'create extension pgcrypto' \
   -f supabase/tests/supabase_stubs.sql \
   -f supabase/migrations/0001_barter.sql \
+  -f supabase/migrations/0002_harden_helpers.sql \
+  -f supabase/migrations/0003_notifications.sql \
   -f supabase/tests/trade_flow_test.sql
 ```
 

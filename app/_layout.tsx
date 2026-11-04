@@ -8,6 +8,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useInboxRealtime } from '@/api/offers';
 import { useMe } from '@/api/profiles';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { UpdatePrompt } from '@/components/UpdatePrompt';
+import { registerForPush, useNotificationRouting } from '@/lib/notifications';
 import { isSupabaseConfigured } from '@/lib/config';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/store/session';
@@ -24,6 +26,7 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <StatusBar style="light" />
           <AuthGate />
+          <UpdatePrompt />
           <OfflineBanner />
         </QueryClientProvider>
       </SafeAreaProvider>
@@ -37,6 +40,11 @@ function AuthGate() {
   const router = useRouter();
   const me = useMe();
   useInboxRealtime();
+  const signedIn = !!session && !!me.data?.onboarded;
+  useNotificationRouting(signedIn);
+  useEffect(() => {
+    if (signedIn) void registerForPush();
+  }, [signedIn]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
