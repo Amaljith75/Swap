@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { create } from 'zustand';
+import { useInstallUpdate } from './installUpdate';
 import { supabase } from './supabase';
 
 /** Which conversation is on screen, so its own message alerts aren't shown on top of it. */
@@ -82,7 +83,12 @@ export function useNotificationRouting(enabled: boolean) {
       const data = r.notification.request.content.data as { type?: string; offer_id?: string; listing_id?: string; url?: string };
       if (data?.offer_id) router.push(`/offer/${data.offer_id}`);
       else if (data?.listing_id) router.push(`/item/${data.listing_id}`);
-      else if (data?.type === 'update') router.push('/settings/update');
+      else if (data?.type === 'update') {
+        // Straight into the in-app download + installer.
+        const build = Number((data as { build?: string }).build ?? 0);
+        if (data.url && build) void useInstallUpdate.getState().start(data.url, build);
+        router.push('/settings/update');
+      }
     };
     void Notifications.getLastNotificationResponseAsync().then(open);
     const sub = Notifications.addNotificationResponseReceivedListener(open);

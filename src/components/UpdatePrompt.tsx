@@ -1,42 +1,92 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Linking, Modal, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useUpdateAvailable } from '@/lib/updates';
+import { cleanOldUpdates, useInstallUpdate } from '@/lib/installUpdate';
+import { currentBuild, useUpdateAvailable } from '@/lib/updates';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { Button, Text } from '@/ui';
 
-/** "New update available" sheet, shown once per app session when a newer APK exists. */
+/** "New update available" sheet. Downloads in the app and opens Android's installer. */
 export function UpdatePrompt() {
   const { available, release } = useUpdateAvailable();
+  const install = useInstallUpdate();
   const [dismissedBuild, setDismissedBuild] = useState<number | null>(null);
-  const open = available && release?.build !== dismissedBuild;
+
+  useEffect(() => {
+    void cleanOldUpdates(currentBuild());
+  }, []);
+
   if (!release) return null;
+  const busy = install.phase === 'downloading' || install.phase === 'installing';
+  const open = (available && release.build !== dismissedBuild) || busy;
 
   return (
-    <Modal transparent visible={open} animationType="fade" onRequestClose={() => setDismissedBuild(release.build)}>
+    <Modal transparent visible={open} animationType="fade" onRequestClose={() => !busy && setDismissedBuild(release.build)}>
       <View style={styles.backdrop}>
         <View style={styles.card} accessibilityRole="alert">
           <View style={styles.icon}>
             <Ionicons name="cloud-download-outline" size={28} color={colors.accentText} />
           </View>
           <Text variant="title">New update available</Text>
-          <Text muted style={styles.center}>
-            {release.name ?? 'A newer version of Swap'} is ready. Download it and install it over this one. Your account and
-            items stay as they are.
-          </Text>
-          <Button
-            label="Update now"
-            icon="download-outline"
-            style={styles.full}
-            onPress={() => {
-              if (release.url) void Linking.openURL(release.url);
-              setDismissedBuild(release.build);
-            }}
-          />
-          <Button label="Later" variant="ghost" onPress={() => setDismissedBuild(release.build)} />
+          <UpdateBody />
+          <UpdateActions onLater={() => setDismissedBuild(release.build)} />
         </View>
       </View>
     </Modal>
+  );
+}
+
+/** Shared by the prompt and the App version screen. */
+export function UpdateBody() {
+  const { release } = useUpdateAvailable();
+  const install = useInstallUpdate();
+  if (install.phase === 'downloading') {
+    const pct = Math.round(install.progress * 100);
+    return (
+      <View style={styles.progressWrap}>
+        <Text muted>Downloading {pct}%</Text>
+        <View style={styles.track}>
+          <View style={[styles.fill, { width: `${pct}%` }]} />
+        </View>
+      </View>
+    );
+  }
+  if (install.phase === 'installing') {
+    return <Text muted style={styles.center}>Opening the installer… Tap Update to finish.</Text>;
+  }
+  if (install.phase === 'error') {
+    return (
+      <Text color={colors.danger} style={styles.center}>
+        {install.error} Check your connection and try again.
+      </Text>
+    );
+  }
+  return (
+    <Text muted style={styles.center}>
+      {release?.name ?? 'A newer version of Swap'} is ready. It installs over this version; your account and items stay as they
+      are.
+    </Text>
+  );
+}
+
+export function UpdateActions({ onLater }: { onLater?: () => void }) {
+  const { release } = useUpdateAvailable();
+  const install = useInstallUpdate();
+  if (!release?.url) return null;
+  const busy = install.phase === 'downloading' || install.phase === 'installing';
+  return (
+    <View style={styles.actions}>
+      <Button
+        label={install.phase === 'error' ? 'Try again' : 'Update now'}
+        icon="download-outline"
+        loading={busy}
+        onPress={() => void install.start(release.url!, release.build)}
+      />
+      {install.phase === 'error' && (
+        <Button label="Download in browser instead" variant="secondary" onPress={() => void Linking.openURL(release.url!)} />
+      )}
+      {onLater && !busy && <Button label="Later" variant="ghost" onPress={onLater} />}
+    </View>
   );
 }
 
@@ -54,5 +104,8 @@ const styles = StyleSheet.create({
   },
   icon: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
   center: { textAlign: 'center' },
-  full: { alignSelf: 'stretch' },
+  actions: { alignSelf: 'stretch', gap: spacing.sm },
+  progressWrap: { alignSelf: 'stretch', gap: spacing.sm, alignItems: 'center' },
+  track: { alignSelf: 'stretch', height: 8, borderRadius: 4, backgroundColor: colors.surface, overflow: 'hidden' },
+  fill: { height: '100%', backgroundColor: colors.accent },
 });

@@ -1,6 +1,7 @@
-import { Linking, View } from 'react-native';
+import { View } from 'react-native';
 import { Platform } from 'react-native';
 import * as Application from 'expo-application';
+import { UpdateActions, UpdateBody } from '@/components/UpdatePrompt';
 import { currentBuild, useLatestRelease } from '@/lib/updates';
 import { colors, spacing } from '@/theme/tokens';
 import { Button, Header, Loading, Screen, Text } from '@/ui';
@@ -15,7 +16,7 @@ export default function UpdateScreen() {
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Header title="App version" />
       <Screen style={{ gap: spacing.lg }}>
-        <Text variant="title">Swap {Application.nativeApplicationVersion ?? ''}</Text>
+        <Text variant="title">Swap V {Application.nativeApplicationVersion ?? ''}</Text>
         <Text muted>This phone has build {mine || 'unknown'}.</Text>
         {Platform.OS !== 'android' ? (
           <Text muted>Updates on iPhone come through the App Store.</Text>
@@ -23,11 +24,8 @@ export default function UpdateScreen() {
           <Loading />
         ) : newer ? (
           <>
-            <Text>{r!.name ?? `Build ${r!.build}`} is available.</Text>
-            <Button label="Update now" icon="download-outline" onPress={() => void Linking.openURL(r!.url!)} />
-            <Text variant="caption" muted>
-              Your browser downloads the new APK. Open it to install over this version.
-            </Text>
+            <UpdateBody />
+            <UpdateActions />
           </>
         ) : (
           <Text color={colors.accent}>You have the latest version.</Text>
