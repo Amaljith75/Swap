@@ -3,7 +3,8 @@ import { Dimensions, Pressable, ScrollView, StyleSheet, View } from 'react-nativ
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useListing, useListingDistance } from '@/api/listings';
+import { useListing, useListingArea, useListingDistance } from '@/api/listings';
+import { AreaMap } from '@/components/AreaMap';
 import { useMyOpenOfferOn } from '@/api/offers';
 import { TrustLine } from '@/components/TrustLine';
 import { categoryLabel, conditionLabel } from '@/lib/config';
@@ -24,6 +25,7 @@ export default function ItemScreen() {
   const listing = useListing(id);
   const distance = useListingDistance(id, coords);
   const myOffer = useMyOpenOfferOn(id);
+  const area = useListingArea(id);
   const [page, setPage] = useState(0);
 
   useEffect(() => {
@@ -108,6 +110,8 @@ export default function ItemScreen() {
           </View>
 
           {!!l.description && <Text style={styles.desc}>{l.description}</Text>}
+
+          {area.data && <AreaMap lat={area.data.lat} lng={area.data.lng} />}
 
           <Pressable
             accessibilityRole="button"

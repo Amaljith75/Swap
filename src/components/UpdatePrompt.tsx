@@ -21,8 +21,8 @@ export function UpdatePrompt() {
           </View>
           <Text variant="title">New update available</Text>
           <Text muted style={styles.center}>
-            A newer version of Swap is ready{release.build ? ` (build ${release.build})` : ''}. Download it and install it over
-            this one. Your account and items stay as they are.
+            {release.name ?? 'A newer version of Swap'} is ready. Download it and install it over this one. Your account and
+            items stay as they are.
           </Text>
           <Button
             label="Update now"

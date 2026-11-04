@@ -305,4 +305,32 @@ select check_((select value->>'build' from app_config where key = 'latest_releas
 select check_((select count(*) from app_config) = 1, 'anon sees only the release row');
 reset role;
 
+
+-- ---------- Area, move, wanted matches ----------
+set role authenticated;
+reset role;
+update profiles set is_suspended = false where id = 'cccccccc-0000-0000-0000-000000000003';
+set role authenticated;
+select t_as('cccccccc-0000-0000-0000-000000000003');
+insert into t_ids values ('c3', create_listing('Old drum kit', '', 'music', 'fair', 'A bicycle or some board games', array['cccccccc-0000-0000-0000-000000000003/d.jpg'], 12.9716, 77.5946));
+select register_push_token('fcm-token-for-meera-0000000', 'android');
+select check_((select count(*) from listing_area(id_('c3'))) = 1, 'owner sees the item area');
+select move_listing(id_('c3'), 12.9900, 77.6100);
+select check_((select lat from listing_area(id_('c3'))) = 12.990, 'moved pin is snapped to the grid');
+select t_as('bbbbbbbb-0000-0000-0000-000000000002');
+select expect_error($$select move_listing(id_('c3'), 1, 1)$$, 'not found');
+-- B lists a bicycle -> C (who wants "a bicycle") is notified, A (no matching want) is not.
+insert into t_ids values ('b7', create_listing('Kids bicycle', '', 'sports', 'good', '', array['bbbbbbbb-0000-0000-0000-000000000002/kb.jpg'], 12.98, 77.60));
+reset role;
+select check_((select count(*) from notification_queue where user_id = 'cccccccc-0000-0000-0000-000000000003' and data->>'type' = 'match') = 1, 'wanted match notifies the person looking for it');
+select check_((select title from notification_queue where data->>'type' = 'match' limit 1) like '% got what you need', 'match title names the lister');
+select check_((select count(*) from notification_queue where user_id = 'aaaaaaaa-0000-0000-0000-000000000001' and data->>'type' = 'match') = 0, 'no match for people who want other things');
+set role authenticated;
+select t_as('bbbbbbbb-0000-0000-0000-000000000002');
+insert into t_ids values ('b8', create_listing('Ticket to Ride board game', '', 'toys', 'good', '', array['bbbbbbbb-0000-0000-0000-000000000002/tr.jpg'], 12.98, 77.60));
+insert into t_ids values ('b9', create_listing('Garden hose', '', 'tools', 'good', '', array['bbbbbbbb-0000-0000-0000-000000000002/gh.jpg'], 12.98, 77.60));
+reset role;
+select check_((select count(*) from notification_queue where user_id = 'cccccccc-0000-0000-0000-000000000003' and data->>'type' = 'match') = 2, 'plural folding: "board games" matches "board game", hose does not');
+select check_(wanted_words('Anything! Open to offers') = '{}', 'filler words never match');
+
 \echo ALL TESTS PASSED

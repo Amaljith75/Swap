@@ -172,3 +172,31 @@ export function useRemoveListing() {
     },
   });
 }
+
+/** The item's rounded (~500 m) position, for the "approximate area" map. */
+export function useListingArea(id: string | undefined) {
+  return useQuery({
+    queryKey: ['listing-area', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('listing_area', { p_id: id! });
+      if (error) throw error;
+      const row = (data as { lat: number; lng: number }[] | null)?.[0];
+      return row ?? null;
+    },
+  });
+}
+
+export function useMoveListing() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (v: { id: string; lat: number; lng: number }) => {
+      const { error } = await supabase.rpc('move_listing', { p_id: v.id, p_lat: v.lat, p_lng: v.lng });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidateListings(qc);
+      void qc.invalidateQueries({ queryKey: ['listing-area'] });
+    },
+  });
+}

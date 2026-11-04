@@ -23,7 +23,7 @@ export default function UpdateScreen() {
           <Loading />
         ) : newer ? (
           <>
-            <Text>Build {r!.build} is available.</Text>
+            <Text>{r!.name ?? `Build ${r!.build}`} is available.</Text>
             <Button label="Update now" icon="download-outline" onPress={() => void Linking.openURL(r!.url!)} />
             <Text variant="caption" muted>
               Your browser downloads the new APK. Open it to install over this version.

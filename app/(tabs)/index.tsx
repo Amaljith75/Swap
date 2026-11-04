@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNearby } from '@/api/listings';
 import { ListingCard } from '@/components/ListingCard';
+import { RotatingTagline } from '@/components/RotatingTagline';
 import { useTabBarSpace } from '@/components/TabBar';
 import { categories, limits } from '@/lib/config';
 import { useLocation } from '@/lib/location';
@@ -45,7 +46,7 @@ export default function Explore() {
       <View style={styles.titleRow}>
         <View style={{ flex: 1 }}>
           <Text variant="display">Swap</Text>
-          <Text muted>Things to trade near you</Text>
+          <RotatingTagline />
         </View>
         <Pressable
           accessibilityRole="button"

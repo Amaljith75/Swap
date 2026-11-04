@@ -9,6 +9,7 @@ import { errorMessage } from '@/lib/errors';
 import { colors, spacing } from '@/theme/tokens';
 import type { Condition } from '@/types/db';
 import { Button, Chip, Input, Text } from '@/ui';
+import { LocationPicker, type LatLng } from './LocationPicker';
 import { PhotoPicker } from './PhotoPicker';
 
 const schema = z.object({
@@ -18,6 +19,9 @@ const schema = z.object({
   condition: z.enum(['new', 'like_new', 'good', 'fair']),
   description: z.string().trim().max(1000),
   looking_for: z.string().trim().max(200),
+  location: z.object({ lat: z.number(), lng: z.number() }).nullable(),
+}).superRefine((v, ctx) => {
+  if (!v.location) ctx.addIssue({ code: 'custom', path: ['location'], message: 'Set where the item is' });
 });
 type Form = z.infer<typeof schema>;
 
@@ -25,7 +29,7 @@ interface Props {
   initial?: Partial<Form>;
   submitLabel: string;
   /** Receives the form values; local photo URIs are uploaded by the caller. */
-  onSubmit: (v: ListingInput) => Promise<void>;
+  onSubmit: (v: ListingInput, location: LatLng) => Promise<void>;
   footer?: React.ReactNode;
 }
 
@@ -40,6 +44,7 @@ export function ItemForm({ initial, submitLabel, onSubmit, footer }: Props) {
       condition: 'good',
       description: '',
       looking_for: '',
+      location: null,
       ...initial,
     },
   });
@@ -47,7 +52,8 @@ export function ItemForm({ initial, submitLabel, onSubmit, footer }: Props) {
   const submit = handleSubmit(async (v) => {
     setError(null);
     try {
-      await onSubmit({ ...v, condition: v.condition as Condition });
+      const { location, ...rest } = v;
+      await onSubmit({ ...rest, condition: v.condition as Condition }, location!);
     } catch (e) {
       setError(errorMessage(e));
     }
@@ -147,6 +153,13 @@ export function ItemForm({ initial, submitLabel, onSubmit, footer }: Props) {
               maxLength={200}
               error={fieldState.error?.message}
             />
+          )}
+        />
+        <Controller
+          control={control}
+          name="location"
+          render={({ field, fieldState }) => (
+            <LocationPicker value={field.value} onChange={field.onChange} error={fieldState.error?.message} />
           )}
         />
         {error && <Text color={colors.danger}>{error}</Text>}

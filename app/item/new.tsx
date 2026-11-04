@@ -19,10 +19,10 @@ export default function NewItem() {
       <Header title="List an item" />
       <ItemForm
         submitLabel="List item"
-        onSubmit={async (v) => {
-          const coords = location.coords ?? (await location.request());
+        onSubmit={async (v, picked) => {
+          const coords = picked ?? location.coords ?? (await location.request());
           if (!coords) {
-            throw new Error('Swap needs your approximate location so nearby people can find this item. Turn on location and try again.');
+            throw new Error('Set where the item is so nearby people can find it.');
           }
           const photos = await resolvePhotos(v.photos, uid!);
           const id = await create.mutateAsync({ ...v, photos, lat: coords.lat, lng: coords.lng });

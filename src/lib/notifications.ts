@@ -79,8 +79,9 @@ export function useNotificationRouting(enabled: boolean) {
     const open = (r: Notifications.NotificationResponse | null) => {
       if (!r || handled.current === r.notification.request.identifier) return;
       handled.current = r.notification.request.identifier;
-      const data = r.notification.request.content.data as { type?: string; offer_id?: string; url?: string };
+      const data = r.notification.request.content.data as { type?: string; offer_id?: string; listing_id?: string; url?: string };
       if (data?.offer_id) router.push(`/offer/${data.offer_id}`);
+      else if (data?.listing_id) router.push(`/item/${data.listing_id}`);
       else if (data?.type === 'update') router.push('/settings/update');
     };
     void Notifications.getLastNotificationResponseAsync().then(open);

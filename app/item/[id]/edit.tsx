@@ -1,6 +1,6 @@
 import { Alert, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useListing, useRemoveListing, useUpdateListing } from '@/api/listings';
+import { useListing, useListingArea, useMoveListing, useRemoveListing, useUpdateListing } from '@/api/listings';
 import { ItemForm } from '@/components/ItemForm';
 import { errorMessage } from '@/lib/errors';
 import { resolvePhotos } from '@/lib/uploadPhotos';
@@ -15,10 +15,12 @@ export default function EditItem() {
   const listing = useListing(id);
   const update = useUpdateListing();
   const remove = useRemoveListing();
+  const area = useListingArea(id);
+  const move = useMoveListing();
 
   const l = listing.data;
   let body: React.ReactNode;
-  if (listing.isLoading) body = <Loading />;
+  if (listing.isLoading || area.isLoading) body = <Loading />;
   else if (listing.isError) body = <ErrorView error={listing.error} onRetry={() => void listing.refetch()} />;
   else if (!l || l.owner_id !== uid) body = <EmptyState icon="alert-circle-outline" title="Item not found" />;
   else if (l.status !== 'available')
@@ -34,10 +36,16 @@ export default function EditItem() {
           condition: l.condition,
           description: l.description,
           looking_for: l.looking_for,
+          location: area.data ?? null,
         }}
-        onSubmit={async (v) => {
+        onSubmit={async (v, loc) => {
           const photos = await resolvePhotos(v.photos, uid!);
           await update.mutateAsync({ ...v, photos, id: l.id });
+          const old = area.data;
+          // Only send a new position if the pin moved out of the current ~500 m cell.
+          if (!old || Math.abs(old.lat - loc.lat) > 0.0025 || Math.abs(old.lng - loc.lng) > 0.0025) {
+            await move.mutateAsync({ id: l.id, lat: loc.lat, lng: loc.lng });
+          }
           router.back();
         }}
         footer={
