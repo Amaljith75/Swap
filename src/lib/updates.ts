@@ -1,6 +1,6 @@
-import { Platform } from 'react-native';
 import * as Application from 'expo-application';
 import { useQuery } from '@tanstack/react-query';
+import { selfUpdates } from './channel';
 import { supabase } from './supabase';
 
 export interface ReleaseInfo {
@@ -15,8 +15,8 @@ export const currentBuild = () => Number(Application.nativeBuildVersion ?? 0) ||
 export function useLatestRelease() {
   return useQuery({
     queryKey: ['latest-release'],
-    // Android APKs only; iOS updates will come through the App Store / TestFlight.
-    enabled: Platform.OS === 'android',
+    // Sideload APKs only. Play and App Store builds are updated by the store.
+    enabled: selfUpdates,
     staleTime: 10 * 60_000,
     refetchInterval: 30 * 60_000,
     queryFn: async () => {
@@ -30,6 +30,6 @@ export function useLatestRelease() {
 export function useUpdateAvailable() {
   const latest = useLatestRelease();
   const r = latest.data;
-  const available = !!r && !!r.url && r.build > currentBuild() && currentBuild() > 0;
+  const available = selfUpdates && !!r && !!r.url && r.build > currentBuild() && currentBuild() > 0;
   return { available, release: r ?? null };
 }

@@ -49,7 +49,7 @@ export function PhotoPicker({ value, onChange, max, error }: Props) {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {value.map((p, i) => (
           <View key={`${p}-${i}`}>
-            <Photo path={p} style={styles.tile} radius={radius.md} />
+            <Photo thumb path={p} style={styles.tile} radius={radius.md} />
             {i === 0 && (
               <View style={styles.cover}>
                 <Text variant="caption" color={colors.accentText} style={styles.coverText}>

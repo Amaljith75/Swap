@@ -69,14 +69,21 @@ export function usePendingCount() {
   });
 }
 
-function invalidateTrade(qc: ReturnType<typeof useQueryClient>, offerId?: string) {
+/**
+ * Refreshes what a trade change can affect. Item lists (nearby, my items, item
+ * pages) only change when items get reserved, swapped or freed, i.e. when a
+ * trade is accepted, completed or cancelled; other steps leave them alone.
+ */
+function invalidateTrade(qc: ReturnType<typeof useQueryClient>, offerId?: string, itemsChanged = true) {
   void qc.invalidateQueries({ queryKey: qk.offers });
   void qc.invalidateQueries({ queryKey: qk.pendingCount });
-  void qc.invalidateQueries({ queryKey: qk.myListings });
-  void qc.invalidateQueries({ queryKey: ['nearby'] });
-  void qc.invalidateQueries({ queryKey: ['listing'] });
   void qc.invalidateQueries({ queryKey: ['my-offer-on'] });
-  void qc.invalidateQueries({ queryKey: ['user-listings'] });
+  if (itemsChanged) {
+    void qc.invalidateQueries({ queryKey: qk.myListings });
+    void qc.invalidateQueries({ queryKey: ['nearby'] });
+    void qc.invalidateQueries({ queryKey: ['listing'] });
+    void qc.invalidateQueries({ queryKey: ['user-listings'] });
+  }
   if (offerId) {
     void qc.invalidateQueries({ queryKey: qk.offer(offerId) });
     void qc.invalidateQueries({ queryKey: qk.messages(offerId) });
@@ -95,7 +102,7 @@ export function useMakeOffer() {
       if (error) throw error;
       return data as string;
     },
-    onSuccess: (id) => invalidateTrade(qc, id),
+    onSuccess: (id) => invalidateTrade(qc, id, false),
   });
 }
 
@@ -113,7 +120,7 @@ export function useRespondOffer(offerId: string) {
       if (error) throw error;
       return data as OfferStatus;
     },
-    onSettled: () => invalidateTrade(qc, offerId),
+    onSettled: (_d, _e, v) => invalidateTrade(qc, offerId, v.action === 'accept' || v.action === 'cancel'),
   });
 }
 
@@ -181,7 +188,10 @@ export function useOfferRealtime(offerId: string | undefined) {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'offers', filter: `id=eq.${offerId}` },
-        () => invalidateTrade(qc, offerId),
+        (payload) => {
+          const status = (payload.new as { status?: OfferStatus }).status;
+          invalidateTrade(qc, offerId, status === 'accepted' || status === 'completed' || status === 'cancelled');
+        },
       )
       .subscribe();
     return () => {

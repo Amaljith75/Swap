@@ -25,6 +25,10 @@ export interface Profile extends ProfileLite {
   city: string | null;
   onboarded: boolean;
   created_at: string;
+  /** Version of the Terms/Privacy Policy this account accepted (0 = not yet). */
+  terms_version: number;
+  /** Set when the account was deleted; the profile then shows as "Deleted user". */
+  deleted_at: string | null;
 }
 
 export interface Listing {

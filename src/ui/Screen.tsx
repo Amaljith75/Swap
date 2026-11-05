@@ -18,11 +18,11 @@ export function Screen({ children, scroll = true, bottomInset = 0, style }: Prop
     paddingBottom: insets.bottom + spacing.xl + bottomInset,
     paddingHorizontal: spacing.lg,
   };
-  if (!scroll) return <View style={[styles.root, pad, style]}>{children}</View>;
+  if (!scroll) return <View style={[styles.root, pad, styles.readable, style]}>{children}</View>;
   return (
     <ScrollView
       style={styles.root}
-      contentContainerStyle={[pad, style]}
+      contentContainerStyle={[pad, styles.readable, style]}
       keyboardShouldPersistTaps="handled"
     >
       {children}
@@ -30,4 +30,10 @@ export function Screen({ children, scroll = true, bottomInset = 0, style }: Prop
   );
 }
 
-const styles = StyleSheet.create({ root: { flex: 1, backgroundColor: colors.bg } });
+// On tablets and unfolded foldables, keep content at a comfortable reading width.
+export const MAX_CONTENT_WIDTH = 640;
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.bg },
+  readable: { width: '100%', maxWidth: MAX_CONTENT_WIDTH, alignSelf: 'center' },
+});

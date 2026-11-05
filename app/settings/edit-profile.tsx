@@ -3,7 +3,7 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useMe, useUpdateProfile } from '@/api/profiles';
 import { errorMessage } from '@/lib/errors';
-import { pickImages, uploadImage } from '@/lib/media';
+import { deleteStoredPhotos, pickImages, uploadImage } from '@/lib/media';
 import { useUserId } from '@/store/session';
 import { colors, spacing } from '@/theme/tokens';
 import { Avatar, Button, Header, Input, Loading, Screen, Text } from '@/ui';
@@ -71,6 +71,7 @@ export default function EditProfile() {
                 bio: bio.trim() || null,
                 avatar_url: avatar,
               });
+              if (me.data?.avatar_url && me.data.avatar_url !== avatar) void deleteStoredPhotos([me.data.avatar_url]);
               router.back();
             } catch (e) {
               setError(errorMessage(e));

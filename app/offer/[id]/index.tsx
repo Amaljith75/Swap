@@ -336,7 +336,7 @@ function Side({ title, items, onOpen }: { title: string; items: ListingLite[]; o
       </Text>
       {items.map((it) => (
         <Pressable key={it.id} accessibilityRole="button" accessibilityLabel={it.title} onPress={() => onOpen(it.id)} style={styles.sideItem}>
-          <Photo path={it.photos[0]} style={styles.sideThumb} radius={radius.sm} />
+          <Photo thumb path={it.photos[0]} style={styles.sideThumb} radius={radius.sm} />
           <Text variant="caption" numberOfLines={2} style={{ flex: 1 }}>
             {it.title}
           </Text>

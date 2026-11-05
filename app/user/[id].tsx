@@ -47,15 +47,21 @@ export default function UserProfile() {
 
   return (
     <View style={styles.root}>
-      <Header right={!isMe ? <HeaderIcon icon="ellipsis-horizontal" label="More options" onPress={menu} /> : undefined} />
+      <Header right={!isMe && !p.deleted_at ? <HeaderIcon icon="ellipsis-horizontal" label="More options" onPress={menu} /> : undefined} />
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.head}>
           <Avatar name={p.display_name} path={p.avatar_url} size={84} />
           <Text variant="title">{p.display_name}</Text>
           <TrustLine rating={p.rating_avg} count={p.rating_count} trades={p.trades_completed} />
-          <Text variant="caption" muted>
-            {p.city ? `${p.city} · ` : ''}Member since {memberSince(p.created_at)}
-          </Text>
+          {p.deleted_at ? (
+            <Text variant="caption" muted>
+              This person deleted their account.
+            </Text>
+          ) : (
+            <Text variant="caption" muted>
+              {p.city ? `${p.city} · ` : ''}Member since {memberSince(p.created_at)}
+            </Text>
+          )}
           {!!p.bio && <Text style={{ textAlign: 'center' }}>{p.bio}</Text>}
           {blocked && (
             <Text variant="caption" color={colors.warning}>

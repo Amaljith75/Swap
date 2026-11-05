@@ -21,7 +21,7 @@ Built with Expo (React Native + TypeScript), and Supabase for the database, sign
 
 1. Open your project on supabase.com and go to **SQL Editor → New query**.
 2. If you ran the old cash/UPI schema in this project, first paste and run `supabase/reset_old_cash_schema.sql`. This deletes the old tables.
-3. Paste all of `supabase/migrations/0001_barter.sql` and press **Run**, then do the same with `0002_harden_helpers.sql`. Each should say "Success. No rows returned". (Already done for the current project.)
+3. Paste each file in `supabase/migrations/` in number order and press **Run**. Each should say "Success. No rows returned". (Already done for the current project.)
 4. Go to **Authentication → Sign In / Providers → Email**:
    - Keep **Email** enabled.
    - While testing, turn **Confirm email** OFF. This lets people sign in straight away. Supabase's built-in email sender only allows a few emails per hour, so confirmation emails get stuck quickly.
@@ -37,7 +37,7 @@ Built with Expo (React Native + TypeScript), and Supabase for the database, sign
 3. Go to **Actions → Build Android APK → Run workflow**. The build also runs on every push to `main`. It takes about 15–25 minutes.
 4. When it turns green, open **Releases** on the repo's main page (or the run's summary). Download `swap-<number>.apk` on your phone and install it. Android will ask you to allow installs from your browser.
 
-New builds install over old ones because they are all signed with the same key. That key is a development key: fine for testing and sideloading, but not for the Play Store. See "Going further" below.
+New builds install over old ones because they are all signed with the same key. That key is a development key: fine for testing and sideloading, but not for the Play Store. The Play Store build is made separately; see "Google Play release" below.
 
 ### 3. Try a full swap
 
@@ -59,7 +59,10 @@ You need two accounts to test properly, for example your phone and a friend's.
 - **Editing an item closes any open offers on it**, so nobody accepts a version they didn't see.
 - **No contact details in chats, offers or profiles.** Phone numbers and links are blocked there, so meetups get arranged inside the app. This can be switched off in `app_config` with the setting `chat_block_contact_info`.
 - **Ratings resist gaming.** Ratings are allowed only after a completed swap. Only each person's latest rating of someone counts, so repeated swaps with the same account can't inflate a score.
-- **Block and report.** Blocking closes all open offers between two people and hides their items from each other. Reports go into the `reports` table for review.
+- **Block and report.** Blocking closes all open offers between two people and hides their items from each other. Reports notify every admin by push, and admins handle them in the app (Profile → Reports). To make someone an admin, add their user id to the `admin_users` table.
+- **18+ only.** Sign-up requires confirming age and accepting the Terms and Privacy Policy. Existing accounts are asked once in the app.
+- **Account deletion** in the app (Profile → Delete account) and on the web (`docs/delete-account.html`). Swaps in progress are closed, photos and personal details deleted, and past chats stay for the other person as "Deleted user".
+- **Rate limits** on offers, messages, reports and nearby search.
 
 Limits can be changed without an app update, in the `app_config` table:
 
@@ -71,6 +74,30 @@ Limits can be changed without an app update, in the `app_config` table:
 - messages per minute
 - maximum search radius
 
+## Two Android builds
+
+| | Sideload APK | Google Play |
+|---|---|---|
+| Workflow | `android-apk.yml`, on every push to `main` | `android-play.yml`, run by hand |
+| Output | GitHub Release `build-N` (public `.apk`) | private `.aab` artifact to upload in Play Console |
+| Signed with | the public debug key | your upload key (GitHub secrets) |
+| Updates | in the app ("Update now") | Google Play |
+| Version code | run number | 1000 + run number |
+
+`APP_CHANNEL` (`sideload` or `play`) switches the in-app updater and the `REQUEST_INSTALL_PACKAGES` permission. Update notices only go to sideload installs.
+
+## Google Play release
+
+1. **Upload key.** On a computer (or ask someone to): `keytool -genkeypair -v -keystore upload.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000`. Keep the file and passwords safe and backed up.
+2. **GitHub secrets** (Settings → Secrets and variables → Actions): `UPLOAD_KEYSTORE_BASE64` (the output of `base64 -w0 upload.jks`), `UPLOAD_KEYSTORE_PASSWORD`, `UPLOAD_KEY_ALIAS` (`upload`), `UPLOAD_KEY_PASSWORD`. Optional: `GOOGLE_MAPS_API_KEY`.
+3. **Web pages.** Settings → Pages → Deploy from a branch → `main`, folder `/docs`. This publishes the privacy policy, terms, account deletion and password reset pages at `https://amaljith75.github.io/swap/`. Put a contact email in `docs/site.js` first.
+4. **Supabase Auth** (Authentication → URL Configuration): Site URL `https://amaljith75.github.io/swap/`; Redirect URLs add `https://amaljith75.github.io/swap/**`. Under Sign In / Providers → Email: minimum password length 8.
+5. Actions → **Build for Google Play (AAB)** → Run workflow. Download the `.aab` from the run and upload it in Play Console.
+
+## Error reports
+
+Uncaught errors and screen crashes are sent to the `client_errors` table (Table Editor → `client_errors`), with the screen, build and phone model. Rows are deleted after 90 days. A nightly job (`maintenance` Edge Function) also deletes photo files nothing uses any more.
+
 ## Project layout
 
 ```
@@ -80,14 +107,19 @@ app/                  screens (Expo Router)
   item/               item detail, new item, edit item
   offer/              make an offer, trade + chat screen, counter-offer
   user/ rate/ report  public profile, rating, report
-  settings/           edit profile, blocked people, safety tips
+  settings/           edit profile, blocked people, safety tips, delete account, version
+  admin/              report queue (admins only)
+  consent.tsx         18+ and terms confirmation
 src/api/              data access (TanStack Query hooks around Supabase)
 src/components/       Swap-specific components
 src/ui/               small design-system primitives
 src/lib/              config, Supabase client, location, photo upload, helpers
-supabase/migrations/  the database schema (run once)
-supabase/tests/       end-to-end SQL test of the trade flow and security rules
-.github/workflows/    the APK build
+supabase/migrations/  the database schema, in order (*_schedules files need Supabase's pg_cron)
+supabase/functions/   Edge Functions: notify, release-check, delete-account, maintenance
+supabase/tests/       end-to-end SQL tests of the trade flow, security rules and release changes
+plugins/              Expo config plugin that signs Play builds with your upload key
+docs/                 public web pages (GitHub Pages): privacy, terms, delete account, reset password
+.github/workflows/    APK build, Play (AAB) build, and checks on every push
 ```
 
 ## Developing on a computer (optional)
@@ -103,17 +135,13 @@ Run the database tests against any local Postgres 16:
 
 ```bash
 createdb swaptest
-psql -d swaptest -c 'create extension pgcrypto' \
-  -f supabase/tests/supabase_stubs.sql \
-  -f supabase/migrations/0001_barter.sql \
-  -f supabase/migrations/0002_harden_helpers.sql \
-  -f supabase/migrations/0003_notifications.sql \
-  -f supabase/tests/trade_flow_test.sql
+files=""; for m in supabase/migrations/0*.sql; do case "$m" in *_schedules*) ;; *) files="$files -f $m";; esac; done
+psql -d swaptest -v ON_ERROR_STOP=1 -c 'create extension pgcrypto' -f supabase/tests/supabase_stubs.sql $files \
+  -f supabase/tests/trade_flow_test.sql -f supabase/tests/play_release_test.sql
 ```
+
+The same tests run on GitHub for every push (`checks.yml`).
 
 ## Going further
 
-- **Push notifications** for new offers and messages. Right now updates arrive live while the app is open, and the Offers tab shows a badge. Push needs a Firebase project and an Expo account.
-- **Play Store release.** This needs a private signing key (kept as GitHub secrets), an account-deletion option in the app, and a privacy policy.
-- **Password reset.** Supabase can send reset emails; the app needs a screen and a deep link to handle the reset.
-- **Admin tools** for reviewing reports and suspending accounts. For now, do this in the Supabase table editor: set `profiles.is_suspended`.
+- **Phone number sign-in** (OTP) instead of email.

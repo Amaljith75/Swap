@@ -24,7 +24,7 @@ export function ItemRow({ item, onPress, selected, trailing }: Props) {
       onPress={onPress}
       style={({ pressed }) => [styles.row, selected && styles.selected, { opacity: pressed ? 0.85 : 1 }]}
     >
-      <Photo path={item.photos[0]} style={styles.thumb} radius={radius.sm} label={item.title} />
+      <Photo thumb path={item.photos[0]} style={styles.thumb} radius={radius.sm} label={item.title} />
       <View style={styles.text}>
         <Text variant="heading" numberOfLines={1}>
           {item.title}

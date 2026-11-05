@@ -20,6 +20,8 @@ export function errorMessage(err: unknown): string {
   if (/invalid login credentials/i.test(raw)) return 'Email or password is wrong.';
   if (/email not confirmed/i.test(raw)) return 'Confirm your email first. Check your inbox for the link.';
   if (/user already registered/i.test(raw)) return 'An account with this email already exists. Sign in instead.';
-  if (/password should be/i.test(raw)) return 'Use a password with at least 6 characters.';
+  if (/password should be|weak password|weak_password/i.test(raw)) return 'Choose a longer password (at least 8 characters, mixing letters and numbers).';
+  if (/for security purposes, you can only request this/i.test(raw)) return 'Please wait a minute before asking for another email.';
+  if (/email rate limit/i.test(raw)) return 'Too many emails were sent just now. Try again in an hour.';
   return raw;
 }

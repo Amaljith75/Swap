@@ -1,7 +1,7 @@
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
-import { publicUrl } from '@/lib/media';
+import { publicUrl, thumbUrl } from '@/lib/media';
 import { colors } from '@/theme/tokens';
 
 interface Props {
@@ -9,10 +9,12 @@ interface Props {
   style?: ViewStyle;
   radius?: number;
   label?: string;
+  /** Use the small copy (lists, cards, thumbnails). */
+  thumb?: boolean;
 }
 
-export function Photo({ path, style, radius = 16, label }: Props) {
-  const uri = publicUrl(path);
+export function Photo({ path, style, radius = 16, label, thumb }: Props) {
+  const uri = thumb ? thumbUrl(path) : publicUrl(path);
   return (
     <View style={[styles.wrap, { borderRadius: radius }, style]}>
       {uri ? (

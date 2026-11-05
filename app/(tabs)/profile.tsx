@@ -1,9 +1,12 @@
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useIsAdmin } from '@/api/admin';
 import { useMe } from '@/api/profiles';
 import { useTabBarSpace } from '@/components/TabBar';
 import { TrustLine } from '@/components/TrustLine';
+import { links } from '@/lib/config';
+import { selfUpdates } from '@/lib/channel';
 import { memberSince } from '@/lib/format';
 import { unregisterForPush } from '@/lib/notifications';
 import { supabase } from '@/lib/supabase';
@@ -46,6 +49,7 @@ export default function Profile() {
   const me = useMe();
   const tabSpace = useTabBarSpace();
   const update = useUpdateAvailable();
+  const isAdmin = useIsAdmin();
 
   if (me.isLoading) return <Loading />;
   if (me.isError || !me.data) return <ErrorView error={me.error} onRetry={() => void me.refetch()} />;
@@ -80,14 +84,17 @@ export default function Profile() {
       <Section title="Safety">
         <Row icon="shield-checkmark-outline" label="How to swap safely" onPress={() => router.push('/settings/safety')} />
         <Row icon="ban-outline" label="Blocked people" onPress={() => router.push('/settings/blocked')} />
+        {isAdmin.data && <Row icon="flag-outline" label="Reports (admin)" onPress={() => router.push('/admin')} />}
       </Section>
       <Section title="App">
         <Row
-          icon="cloud-download-outline"
+          icon={selfUpdates ? 'cloud-download-outline' : 'information-circle-outline'}
           label={update.available ? 'Update available' : 'App version'}
           value={update.available ? `Build ${update.release?.build}` : `Build ${currentBuild() || '–'}`}
           onPress={() => router.push('/settings/update')}
         />
+        <Row icon="lock-closed-outline" label="Privacy Policy" onPress={() => void Linking.openURL(links.privacy)} />
+        <Row icon="document-text-outline" label="Terms of Use" onPress={() => void Linking.openURL(links.terms)} />
       </Section>
       <Section title="Session">
         <Row
@@ -101,6 +108,7 @@ export default function Profile() {
             ])
           }
         />
+        <Row icon="trash-outline" label="Delete account" danger onPress={() => router.push('/settings/delete-account')} />
       </Section>
     </Screen>
   );

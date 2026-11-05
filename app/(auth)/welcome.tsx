@@ -1,8 +1,8 @@
-import { StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { isSupabaseConfigured } from '@/lib/config';
+import { MIN_AGE, isSupabaseConfigured, links } from '@/lib/config';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { Button, Screen, Text } from '@/ui';
 
@@ -50,6 +50,16 @@ export default function Welcome() {
           disabled={!isSupabaseConfigured}
           onPress={() => router.push('/(auth)/sign-in?mode=signin')}
         />
+        <Text variant="caption" muted style={styles.legal}>
+          For people aged {MIN_AGE}+.{' '}
+          <Text variant="caption" color={colors.accent} accessibilityRole="link" onPress={() => void Linking.openURL(links.terms)}>
+            Terms
+          </Text>{' '}
+          ·{' '}
+          <Text variant="caption" color={colors.accent} accessibilityRole="link" onPress={() => void Linking.openURL(links.privacy)}>
+            Privacy Policy
+          </Text>
+        </Text>
       </View>
     </Screen>
   );
@@ -70,4 +80,5 @@ const styles = StyleSheet.create({
   points: { gap: spacing.md, paddingHorizontal: spacing.sm },
   point: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   bottom: { gap: spacing.md },
+  legal: { textAlign: 'center' },
 });

@@ -20,6 +20,7 @@ export const Input = forwardRef<TextInput, Props>(function Input({ label, error,
       <TextInput
         ref={ref}
         placeholderTextColor={colors.textMuted}
+        maxFontSizeMultiplier={1.5}
         selectionColor={colors.accent}
         multiline={multiline}
         accessibilityLabel={label}

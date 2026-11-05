@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Delete Swap Account</title>
+  <meta name="description" content="Delete your Swap account and data from any browser.">
+  <link rel="stylesheet" href="style.css">
+  <script src="site.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+</head>
+<body>
+<main>
+  <header class="site"><span class="logo">⇄</span><a href="./">Swap</a></header>
+
+  <h1>Delete your Swap account</h1>
+  <p class="muted">You can also do this in the app: Profile → Delete account.</p>
+
+  <div class="card">
+    <strong>What happens</strong>
+    <ul>
+      <li>Deleted straight away: your sign-in (email and password), profile, photos, items nobody offered on, notification tokens and
+        block list.</li>
+      <li>Open offers and accepted swaps are cancelled, and the other person is told.</li>
+      <li>Messages, offers and ratings that are part of someone else's trade history stay for them, shown as "Deleted user".</li>
+      <li>This can't be undone.</li>
+    </ul>
+  </div>
+
+  <form id="signin">
+    <h2>1. Sign in to confirm it's you</h2>
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="email" required>
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+    <button type="submit" id="signin-btn">Sign in</button>
+    <p class="muted">Forgot your password? Use "Forgot password?" on the app's sign-in screen to reset it first.</p>
+  </form>
+
+  <form id="confirm" class="hidden">
+    <h2>2. Confirm</h2>
+    <p>Signed in as <strong id="who"></strong>.</p>
+    <label for="typed">Type DELETE to confirm</label>
+    <input id="typed" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <button type="submit" class="danger" id="delete-btn" disabled>Delete my account</button>
+  </form>
+
+  <p id="msg" class="msg" role="status" aria-live="polite"></p>
+
+  <p class="muted">Can't sign in? Write to <span data-contact></span> from the email address on your account and we will delete it
+    for you within 30 days.</p>
+
+  <footer>
+    <a href="./">Home</a> · <a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms of Use</a>
+  </footer>
+</main>
+<script>
+  const msg = document.getElementById('msg');
+  const say = (text, kind) => { msg.textContent = text; msg.className = 'msg ' + (kind || ''); };
+
+  let sb = null;
+  try {
+    // Session lives only in this tab's memory and is never saved.
+    sb = supabase.createClient(SWAP.SUPABASE_URL, SWAP.SUPABASE_ANON_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    });
+  } catch (e) {
+    say('This page could not load. Check your connection and refresh.', 'error');
+  }
+
+  const signinForm = document.getElementById('signin');
+  const confirmForm = document.getElementById('confirm');
+  const typed = document.getElementById('typed');
+  const delBtn = document.getElementById('delete-btn');
+
+  signinForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!sb) return;
+    const btn = document.getElementById('signin-btn');
+    btn.disabled = true;
+    say('Signing in…');
+    const { data, error } = await sb.auth.signInWithPassword({
+      email: document.getElementById('email').value.trim(),
+      password: document.getElementById('password').value,
+    });
+    btn.disabled = false;
+    if (error) {
+      say(/invalid login/i.test(error.message) ? 'Email or password is wrong.' : error.message, 'error');
+      return;
+    }
+    document.getElementById('who').textContent = data.user.email;
+    signinForm.classList.add('hidden');
+    confirmForm.classList.remove('hidden');
+    say('');
+    typed.focus();
+  });
+
+  typed.addEventListener('input', () => { delBtn.disabled = typed.value.trim().toUpperCase() !== 'DELETE'; });
+
+  confirmForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!sb || delBtn.disabled) return;
+    delBtn.disabled = true;
+    say('Deleting your account…');
+    const { data: s } = await sb.auth.getSession();
+    try {
+      const res = await fetch(SWAP.SUPABASE_URL + '/functions/v1/delete-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + (s.session ? s.session.access_token : ''),
+          apikey: SWAP.SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ confirm: 'DELETE' }),
+      });
+      const out = await res.json().catch(() => ({}));
+      if (!res.ok || !out.deleted) throw new Error(out.error || 'Could not delete the account. Try again.');
+      confirmForm.classList.add('hidden');
+      say('Your Swap account has been deleted. You can uninstall the app.', 'ok');
+    } catch (err) {
+      delBtn.disabled = false;
+      say(err.message, 'error');
+    }
+  });
+</script>
+</body>
+</html>

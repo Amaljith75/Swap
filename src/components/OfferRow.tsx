@@ -21,8 +21,8 @@ export function OfferRow({ offer, me, onPress }: { offer: Offer; me: string; onP
       style={({ pressed }) => [styles.row, { opacity: pressed ? 0.85 : 1 }]}
     >
       <View style={styles.thumbs}>
-        <Photo path={mine?.photos[0]} style={styles.thumbBack} radius={radius.sm} />
-        <Photo path={theirs?.photos[0]} style={styles.thumbFront} radius={radius.sm} />
+        <Photo thumb path={mine?.photos[0]} style={styles.thumbBack} radius={radius.sm} />
+        <Photo thumb path={theirs?.photos[0]} style={styles.thumbFront} radius={radius.sm} />
       </View>
       <View style={styles.text}>
         <View style={styles.top}>

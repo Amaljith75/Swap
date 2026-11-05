@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { create } from 'zustand';
+import { pushChannel, selfUpdates } from './channel';
 import { useInstallUpdate } from './installUpdate';
 import { supabase } from './supabase';
 
@@ -49,15 +50,31 @@ export async function registerForPush(): Promise<void> {
     if (status !== 'granted') status = (await Notifications.requestPermissionsAsync()).status;
     if (status !== 'granted') return;
     const token = (await Notifications.getDevicePushTokenAsync()).data as string;
-    if (!token || token === registeredToken) return;
-    const { error } = await supabase.rpc('register_push_token', {
-      p_token: token,
-      p_platform: Platform.OS === 'ios' ? 'ios' : 'android',
-    });
-    if (!error) registeredToken = token;
+    await saveToken(token);
   } catch {
     // No FCM config in this build, or no network. Try again next launch.
   }
+}
+
+async function saveToken(token: string | null | undefined) {
+  if (!token || token === registeredToken) return;
+  const { error } = await supabase.rpc('register_push_token', {
+    p_token: token,
+    p_platform: Platform.OS === 'ios' ? 'ios' : 'android',
+    p_channel: pushChannel(),
+  });
+  if (!error) registeredToken = token;
+}
+
+/** Firebase can rotate a device's token while the app runs; keep the server's copy current. */
+export function usePushTokenRefresh(enabled: boolean) {
+  useEffect(() => {
+    if (Platform.OS === 'web' || !enabled) return;
+    const sub = Notifications.addPushTokenListener((t) => {
+      void saveToken(typeof t.data === 'string' ? t.data : null).catch(() => undefined);
+    });
+    return () => sub.remove();
+  }, [enabled]);
 }
 
 /** Call before signing out so the next person on this phone doesn't get your alerts. */
@@ -83,7 +100,9 @@ export function useNotificationRouting(enabled: boolean) {
       const data = r.notification.request.content.data as { type?: string; offer_id?: string; listing_id?: string; url?: string };
       if (data?.offer_id) router.push(`/offer/${data.offer_id}`);
       else if (data?.listing_id) router.push(`/item/${data.listing_id}`);
-      else if (data?.type === 'update') {
+      else if (data?.type === 'report') router.push('/admin');
+      else if (data?.type === 'removed') router.navigate('/(tabs)/items');
+      else if (data?.type === 'update' && selfUpdates) {
         // Straight into the in-app download + installer.
         const build = Number((data as { build?: string }).build ?? 0);
         if (data.url && build) void useInstallUpdate.getState().start(data.url, build);

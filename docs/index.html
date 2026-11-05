@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Swap</title>
+  <meta name="description" content="Swap items with people near you. No money involved.">
+  <link rel="stylesheet" href="style.css">
+  <script src="site.js"></script>
+</head>
+<body>
+<main>
+  <header class="site"><span class="logo">⇄</span><a href="./">Swap</a></header>
+
+  <!-- Shown when someone arrives from the "confirm your email" link. -->
+  <div id="confirmed" class="card hidden">
+    <h1>Email confirmed</h1>
+    <p>Your Swap account is ready. Go back to the Swap app and sign in.</p>
+  </div>
+  <div id="link-error" class="card hidden">
+    <h1>That link didn't work</h1>
+    <p id="link-error-text">It may have expired or already been used. Try signing in to the app; if your email still isn't
+      confirmed, sign up again to get a new link.</p>
+  </div>
+
+  <h1 id="title">Trade things you have for things you want.</h1>
+  <p class="muted">Swap is an Android app for swapping items with people nearby. No money involved. For people aged 18+.</p>
+  <ul>
+    <li>List things you no longer use, with photos.</li>
+    <li>Offer your items for things near you. The owner can accept, decline or ask for something else.</li>
+    <li>Chat in the app, meet in a public place, swap, and rate each other.</li>
+  </ul>
+
+  <h2>Help</h2>
+  <ul>
+    <li><a href="privacy.html">Privacy Policy</a></li>
+    <li><a href="terms.html">Terms of Use</a></li>
+    <li><a href="delete-account.html">Delete your account</a></li>
+    <li>Forgot your password? Tap "Forgot password?" on the app's sign-in screen.</li>
+    <li>Contact: <span data-contact></span></li>
+  </ul>
+</main>
+<script>
+  // Supabase sends people here after they confirm their email (Site URL).
+  const hash = new URLSearchParams(location.hash.slice(1));
+  const query = new URLSearchParams(location.search);
+  const err = hash.get('error_description') || query.get('error_description');
+  if (err) {
+    document.getElementById('link-error').classList.remove('hidden');
+  } else if (hash.get('access_token') || query.get('code') || hash.get('type') === 'signup') {
+    document.getElementById('confirmed').classList.remove('hidden');
+  }
+  // Don't leave one-time tokens in the address bar or history.
+  if (location.hash || query.get('code')) history.replaceState(null, '', location.pathname);
+</script>
+</body>
+</html>

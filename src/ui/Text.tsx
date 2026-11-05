@@ -9,7 +9,10 @@ interface Props extends TextProps {
   color?: string;
 }
 
-export function Text({ variant = 'body', muted, onSheet, color, style, ...rest }: Props) {
+/** Respect the phone's font size, up to 1.5x (beyond that cards and buttons overflow). */
+export const MAX_FONT_SCALE = 1.5;
+
+export function Text({ variant = 'body', muted, onSheet, color, style, maxFontSizeMultiplier = MAX_FONT_SCALE, ...rest }: Props) {
   const base = onSheet
     ? muted
       ? colors.textOnSheetMuted
@@ -17,5 +20,5 @@ export function Text({ variant = 'body', muted, onSheet, color, style, ...rest }
     : muted
       ? colors.textMuted
       : colors.text;
-  return <RNText {...rest} style={[typeScale[variant], { color: color ?? base }, style]} />;
+  return <RNText maxFontSizeMultiplier={maxFontSizeMultiplier} {...rest} style={[typeScale[variant], { color: color ?? base }, style]} />;
 }

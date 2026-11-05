@@ -14,6 +14,26 @@ export const env = {
 
 export const isSupabaseConfigured = env.supabaseUrl.length > 0 && env.supabaseAnonKey.length > 0;
 
+// Public web pages (GitHub Pages, from the docs/ folder of the repo).
+// EXPO_PUBLIC_SITE_URL overrides this if the pages move to your own domain.
+const SITE = (process.env.EXPO_PUBLIC_SITE_URL || 'https://amaljith75.github.io/swap').replace(/\/$/, '');
+export const links = {
+  /** Landing page; also where "confirm your email" links end up. */
+  site: `${SITE}/`,
+  privacy: `${SITE}/privacy.html`,
+  terms: `${SITE}/terms.html`,
+  deleteAccount: `${SITE}/delete-account.html`,
+  /** Where password-reset emails send people (must be in Supabase Auth > URL Configuration > Redirect URLs). */
+  resetPassword: `${SITE}/reset-password.html`,
+};
+
+/** Bump when the Terms or Privacy Policy change in a way people must agree to again. */
+export const TERMS_VERSION = 1;
+/** Minimum age to use Swap. */
+export const MIN_AGE = 18;
+/** Minimum password length for new passwords (also set this in Supabase Auth settings). */
+export const MIN_PASSWORD = 8;
+
 export const limits = {
   maxPhotos: 4,
   maxOfferItems: 5,

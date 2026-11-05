@@ -1,5 +1,7 @@
 name: Build Android APK
 
+# The sideload build (GitHub Releases, updates itself in the app).
+# The Google Play build is made by android-play.yml instead.
 # Runs on every push to main, or by hand from the Actions tab ("Run workflow").
 on:
   workflow_dispatch:
@@ -46,7 +48,9 @@ jobs:
         run: npx expo prebuild --platform android --no-install
         env:
           CI: 1
+          APP_CHANNEL: sideload
           BUILD_NUMBER: ${{ github.run_number }}
+          GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
 
       - name: Build release APK
         working-directory: android
@@ -54,6 +58,7 @@ jobs:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           NODE_ENV: production
+          APP_CHANNEL: sideload
           BUILD_NUMBER: ${{ github.run_number }}
         run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
 

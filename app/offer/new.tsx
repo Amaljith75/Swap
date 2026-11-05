@@ -50,7 +50,7 @@ export default function NewOffer() {
           ListHeaderComponent={
             <View style={styles.head}>
               <View style={styles.target}>
-                <Photo path={target.data.photos[0]} style={styles.targetPhoto} radius={radius.md} />
+                <Photo thumb path={target.data.photos[0]} style={styles.targetPhoto} radius={radius.md} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text variant="caption" muted>
                     You want

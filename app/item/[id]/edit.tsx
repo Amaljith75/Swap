@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useListing, useListingArea, useMoveListing, useRemoveListing, useUpdateListing } from '@/api/listings';
 import { ItemForm } from '@/components/ItemForm';
 import { errorMessage } from '@/lib/errors';
+import { deleteStoredPhotos } from '@/lib/media';
 import { resolvePhotos } from '@/lib/uploadPhotos';
 import { useUserId } from '@/store/session';
 import { colors } from '@/theme/tokens';
@@ -41,6 +42,7 @@ export default function EditItem() {
         onSubmit={async (v, loc) => {
           const photos = await resolvePhotos(v.photos, uid!);
           await update.mutateAsync({ ...v, photos, id: l.id });
+          void deleteStoredPhotos(l.photos.filter((p) => !photos.includes(p)));
           const old = area.data;
           // Only send a new position if the pin moved out of the current ~500 m cell.
           if (!old || Math.abs(old.lat - loc.lat) > 0.0025 || Math.abs(old.lng - loc.lng) > 0.0025) {

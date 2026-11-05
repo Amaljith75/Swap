@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { create } from 'zustand';
+import { selfUpdates } from './channel';
 
 type Phase = 'idle' | 'downloading' | 'installing' | 'error';
 
@@ -29,7 +30,7 @@ export const useInstallUpdate = create<InstallState>((set, get) => ({
   error: null,
   reset: () => set({ phase: 'idle', progress: 0, error: null }),
   start: async (url, build) => {
-    if (Platform.OS !== 'android' || get().phase === 'downloading') return;
+    if (!selfUpdates || get().phase === 'downloading') return;
     set({ phase: 'downloading', progress: 0, error: null });
     try {
       const target = apkPath(build);

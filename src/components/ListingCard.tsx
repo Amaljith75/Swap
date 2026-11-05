@@ -12,7 +12,7 @@ export function ListingCard({ item, onPress }: { item: NearbyListing; onPress: (
       onPress={onPress}
       style={({ pressed }) => [styles.card, { opacity: pressed ? 0.85 : 1 }]}
     >
-      <Photo path={item.photos[0]} style={styles.photo} radius={radius.md} label={item.title} />
+      <Photo thumb path={item.photos[0]} style={styles.photo} radius={radius.md} label={item.title} />
       <View style={styles.distance}>
         <Text variant="caption" color={colors.accentText} style={styles.distanceText}>
           {formatDistance(item.distance_km)}
