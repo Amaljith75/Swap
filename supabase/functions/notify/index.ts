@@ -15,6 +15,7 @@ interface QueueRow {
   title: string;
   body: string;
   data: Record<string, unknown>;
+  channel: string | null; // broadcasts only: limit to one install channel (e.g. update notices -> sideload)
 }
 
 const json = (body: unknown, status = 200) =>
@@ -68,6 +69,7 @@ async function sendOne(row: QueueRow) {
   const sa = JSON.parse(raw);
   let q = sb.from('push_tokens').select('token,platform');
   q = row.user_id ? q.eq('user_id', row.user_id) : q.limit(5000);
+  if (row.channel) q = q.eq('channel', row.channel);
   const { data: tokens, error } = await q;
   if (error) throw error;
 
@@ -127,7 +129,7 @@ Deno.serve(async (req) => {
         .update({ status: 'sending' })
         .eq('id', id)
         .eq('status', 'pending')
-        .select('id,user_id,title,body,data');
+        .select('id,user_id,title,body,data,channel');
       const row = rows?.[0] as QueueRow | undefined;
       if (!row) continue;
       try {
