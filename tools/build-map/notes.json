@@ -52,6 +52,16 @@
     "New server function app-download: updates download through Swap's own address",
     "Release check redeployed; the current release link no longer points to GitHub"
    ]
+  },
+  {
+   "after": "9bbeb44",
+   "branch": "pre-playstore-audit",
+   "date": "2026-11-07T01:24:00+05:30",
+   "title": "Test build 9 sent to the owner's phone only",
+   "items": [
+    "Published as a GitHub pre-release, so testers were not notified",
+    "Update notification sent to the owner's account; tapping it installs build 9"
+   ]
   }
  ],
  "project": {
