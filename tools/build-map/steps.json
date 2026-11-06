@@ -8,7 +8,7 @@
  {
   "id": "test",
   "title": "Test V 1.2 on your phone",
-  "detail": "Sign up, accept the 18+ screen, list an item, browse Everywhere and the 1/10/25 km filters, share an item to WhatsApp, swap with a second account, report someone, then delete a test account."
+  "detail": "Sign up, list an item, browse Everywhere and the 1/10/25 km filters, share an item to WhatsApp, swap with a second account, report someone, then delete a test account."
  },
  {
   "id": "pages",
@@ -49,7 +49,7 @@
  {
   "id": "listing",
   "title": "Fill in the store listing and Data safety form",
-  "detail": "Screenshots, description, content rating, target audience 18+, and the privacy policy link."
+  "detail": "Screenshots, description, content rating, target audience, and the privacy policy link."
  },
  {
   "id": "playlive",

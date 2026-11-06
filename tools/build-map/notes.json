@@ -62,6 +62,17 @@
     "Published as a GitHub pre-release, so testers were not notified",
     "Update notification sent to the owner's account; tapping it installs build 9"
    ]
+  },
+  {
+   "after": "d30bce4",
+   "branch": "pre-playstore-audit",
+   "date": "2026-11-07T01:42:00+05:30",
+   "title": "Live backend: sign-up records Terms without an age check; test build 10 sent to the owner",
+   "items": [
+    "Database migration 0013 applied",
+    "Build 10 published as a pre-release (testers not notified)",
+    "Update notification sent to the owner's phone only"
+   ]
   }
  ],
  "project": {
