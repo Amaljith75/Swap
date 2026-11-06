@@ -1,7 +1,8 @@
-import { Linking, StyleSheet, View } from 'react-native';
+import { Image, Linking, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { Wordmark } from '@/components/Wordmark';
 import { MIN_AGE, isSupabaseConfigured, links } from '@/lib/config';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { Button, Screen, Text } from '@/ui';
@@ -19,11 +20,9 @@ export default function Welcome() {
       <View style={styles.top}>
         <LinearGradient colors={[...colors.gradientHero]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
           <View style={styles.logo}>
-            <Ionicons name="swap-horizontal" size={30} color={colors.accent} />
+            <Image source={require('../../assets/brand/mark.png')} style={styles.mark} accessibilityIgnoresInvertColors />
           </View>
-          <Text variant="display" onSheet>
-            Swap
-          </Text>
+          <Wordmark height={34} color={colors.textOnSheet} />
           <Text onSheet muted>
             Trade things you have for things you want, with people near you. No money involved.
           </Text>
@@ -77,6 +76,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing.md,
   },
+  mark: { width: 34, height: 34 },
   points: { gap: spacing.md, paddingHorizontal: spacing.sm },
   point: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   bottom: { gap: spacing.md },

@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useInboxRealtime } from '@/api/offers';
 import { useMe } from '@/api/profiles';
 import { OfflineBanner } from '@/components/OfflineBanner';
+import { IntroAnimation } from '@/components/IntroAnimation';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { registerForPush, useNotificationRouting, usePushTokenRefresh } from '@/lib/notifications';
 import { TERMS_VERSION, isSupabaseConfigured } from '@/lib/config';
@@ -57,6 +58,7 @@ export default function RootLayout() {
           <AuthGate />
           <UpdatePrompt />
           <OfflineBanner />
+          <IntroAnimation />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

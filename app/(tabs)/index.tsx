@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNearby } from '@/api/listings';
 import { ListingCard } from '@/components/ListingCard';
 import { RotatingTagline } from '@/components/RotatingTagline';
+import { Wordmark } from '@/components/Wordmark';
 import { useTabBarSpace } from '@/components/TabBar';
 import { categories, limits } from '@/lib/config';
 import { useLocation } from '@/lib/location';
@@ -49,10 +50,10 @@ export default function Explore() {
   const cells = useMemo(() => (items.length % 2 ? [...items, null] : items), [items]);
 
   const header = (
-    <View style={[styles.header, { paddingTop: insets.top + spacing.md }]}>
+    <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
       <View style={styles.titleRow}>
-        <View style={{ flex: 1 }}>
-          <Text variant="display">Swap</Text>
+        <View style={{ flex: 1, gap: 6 }}>
+          <Wordmark height={24} />
           <RotatingTagline />
         </View>
         <Pressable
@@ -61,7 +62,7 @@ export default function Explore() {
           onPress={() => router.push('/item/new')}
           style={styles.addBtn}
         >
-          <Ionicons name="add" size={26} color={colors.accentText} />
+          <Ionicons name="add" size={22} color={colors.accentText} />
         </Pressable>
       </View>
 
@@ -203,10 +204,14 @@ const styles = StyleSheet.create({
   col: { gap: spacing.md },
   header: { gap: spacing.md, marginBottom: spacing.sm },
   titleRow: { flexDirection: 'row', alignItems: 'center' },
+  // Kept in from the screen's rounded corner.
   addBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginRight: spacing.xs,
+    alignSelf: 'flex-start',
+    marginTop: 2,
     backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
