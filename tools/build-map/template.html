@@ -1,0 +1,499 @@
+<title>Swap Build Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column. A git-style rail on the left (main lane + branch lane), cards on the right,
+   history top to bottom, then the planned steps continue the main lane as dashed nodes. */
+:root {
+  --bg: #F4F6F5;
+  --surface: #FFFFFF;
+  --ink: #15201C;
+  --muted: #5D6A65;
+  --faint: #8C9894;
+  --line: #DDE3E0;
+  --main: #1E7A62;          /* main branch lane */
+  --main-soft: #DCEFE8;
+  --branch: #3D5CCB;        /* feature branch lane */
+  --branch-soft: #E2E7FA;
+  --app: #3D5CCB;
+  --backend: #1E7A62;
+  --build: #B97A12;
+  --docs: #9A4F86;
+  --ok: #1E7A62;
+  --bad: #C2413A;
+  --paid: #B97A12;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1513; --surface: #17201D; --ink: #E7EEEB; --muted: #9DABA6; --faint: #6E7C77; --line: #26322E;
+    --main: #46C29C; --main-soft: #173A30; --branch: #8EA2FF; --branch-soft: #1E2748;
+    --app: #8EA2FF; --backend: #46C29C; --build: #E2AE4B; --docs: #D38BC2; --ok: #46C29C; --bad: #F07A72; --paid: #E2AE4B;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1513; --surface: #17201D; --ink: #E7EEEB; --muted: #9DABA6; --faint: #6E7C77; --line: #26322E;
+  --main: #46C29C; --main-soft: #173A30; --branch: #8EA2FF; --branch-soft: #1E2748;
+  --app: #8EA2FF; --backend: #46C29C; --build: #E2AE4B; --docs: #D38BC2; --ok: #46C29C; --bad: #F07A72; --paid: #E2AE4B;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 860px; margin: 0 auto; padding-block: 32px 64px; display: grid; gap: 28px; }
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--branch); outline-offset: 2px; border-radius: 6px; }
+.mono { font-family: var(--mono); font-size: 12.5px; }
+
+/* ---------- header ---------- */
+header.top { display: grid; gap: 14px; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(34px, 6vw, 48px); line-height: 1.02; letter-spacing: -0.02em; margin: 0; text-wrap: balance; }
+.tagline { color: var(--muted); margin: 0; max-width: 60ch; }
+.status { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px; font-size: 13px; font-weight: 500; background: var(--surface); border: 1px solid var(--line); }
+.pill i { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.pill.live i { background: var(--main); }
+.pill.wip i { background: var(--branch); }
+
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.summary > div { background: var(--surface); padding: 12px 14px; min-width: 0; }
+.summary b { display: block; font-family: var(--display); font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.summary span { font-size: 12.5px; color: var(--muted); }
+@media (max-width: 560px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.next { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; background: var(--branch-soft); border-radius: 14px; padding: 14px 16px; }
+.next .label { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--branch); font-weight: 700; }
+.next .t { font-weight: 600; min-width: 0; }
+.next a { font-size: 13.5px; font-weight: 600; color: var(--branch); text-decoration: none; white-space: nowrap; }
+.progress { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; grid-column: 1 / -1; }
+.progress > div { height: 100%; background: var(--branch); border-radius: 3px; transition: width .4s ease; }
+@media (max-width: 480px) { .next { grid-template-columns: 1fr; } }
+
+/* ---------- controls ---------- */
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding-block: 10px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; cursor: pointer; min-height: 34px; }
+.chip i { width: 8px; height: 8px; border-radius: 2px; }
+.chip[aria-pressed="true"] { border-color: var(--ink); font-weight: 600; }
+.chip.ghost { background: transparent; }
+
+/* ---------- flow ---------- */
+.flow { display: grid; }
+.day { display: grid; grid-template-columns: 64px 1fr; align-items: center; }
+.day .rail { align-self: stretch; }
+.day h2 { font-family: var(--display); font-size: 15px; font-weight: 700; margin: 0; padding: 18px 0 8px; color: var(--muted); letter-spacing: .01em; }
+.row { display: grid; grid-template-columns: 64px minmax(0, 1fr); }
+.rail { position: relative; }
+.rail .ln { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; }
+.rail .ln.l0 { left: 18px; background: var(--main); }
+.rail .ln.l1 { left: 46px; background: var(--branch); }
+.rail .ln.from-dot { top: 24px; }
+.rail .ln.to-dot { bottom: auto; height: 24px; }
+.rail .ln.dash { background: repeating-linear-gradient(to bottom, var(--faint) 0 5px, transparent 5px 10px); }
+.rail svg { position: absolute; left: 0; top: 0; width: 64px; height: 26px; overflow: visible; }
+.rail svg path { fill: none; stroke-width: 2; }
+.dot { position: absolute; top: 24px; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--surface); border: 2.5px solid var(--main); }
+.dot.l0 { left: 18px; } .dot.l1 { left: 46px; border-color: var(--branch); }
+.dot.fill.l0 { background: var(--main); } .dot.fill.l1 { background: var(--branch); }
+.dot.rel { width: 20px; height: 20px; margin: -10px 0 0 -10px; border-width: 3px; box-shadow: 0 0 0 4px var(--main-soft); }
+.dot.rel.l1 { box-shadow: 0 0 0 4px var(--branch-soft); }
+.dot.deploy { border-radius: 3px; transform: rotate(45deg); background: var(--branch); border-color: var(--branch); width: 12px; height: 12px; margin: -6px 0 0 -6px; }
+.dot.step { border-style: dashed; border-color: var(--faint); }
+.dot.step.done { border-style: solid; border-color: var(--main); background: var(--main); }
+.dot.merge { width: 18px; height: 18px; margin: -9px 0 0 -9px; }
+
+.card { margin: 6px 0 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px 12px; min-width: 0; display: grid; gap: 8px; transition: opacity .2s; }
+.card.small { background: transparent; border-color: transparent; padding-block: 6px; }
+.card.planned { background: transparent; border-style: dashed; }
+.card.planned.done { background: var(--surface); border-style: solid; }
+.card.dim { opacity: .35; }
+.card h3 { margin: 0; font-size: 15.5px; font-weight: 600; line-height: 1.35; text-wrap: pretty; }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; color: var(--muted); align-items: center; }
+.meta a { text-decoration: none; }
+.meta a:hover { text-decoration: underline; }
+.plus { color: var(--ok); } .minus { color: var(--bad); }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; text-decoration: none; white-space: nowrap; }
+.tag.rel { background: var(--main-soft); color: var(--main); }
+.tag.rel.l1 { background: var(--branch-soft); color: var(--branch); }
+.tag.ci-ok { color: var(--ok); border: 1px solid currentColor; }
+.tag.ci-bad { color: var(--bad); border: 1px solid currentColor; }
+.tag.cost { color: var(--paid); border: 1px solid currentColor; }
+.tag.free { color: var(--muted); border: 1px solid var(--line); }
+.tag.live { background: var(--branch); color: var(--surface); }
+
+.areas { display: flex; height: 6px; border-radius: 3px; overflow: hidden; gap: 2px; }
+.areas span { display: block; height: 100%; border-radius: 2px; }
+.a-app { background: var(--app); } .a-backend { background: var(--backend); } .a-build { background: var(--build); } .a-docs { background: var(--docs); }
+.arealegend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); }
+.arealegend i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; margin-right: 5px; vertical-align: 0; }
+
+.group { display: grid; gap: 4px; }
+.group .gl { font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--faint); font-weight: 700; margin-top: 2px; }
+.group ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.group li { position: relative; padding-left: 18px; font-size: 14px; color: var(--ink); }
+.group li::before { content: ""; position: absolute; left: 3px; top: .55em; width: 7px; height: 7px; border: 2px solid var(--faint); border-radius: 50%; }
+.more { justify-self: start; background: none; border: 0; padding: 4px 0; font-size: 13px; font-weight: 600; color: var(--branch); cursor: pointer; min-height: 32px; }
+.files { display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 8px; }
+.files div { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.files b { font-weight: 600; color: var(--ink); margin-right: 6px; }
+
+.check { display: flex; gap: 10px; align-items: flex-start; }
+.box { flex: none; width: 24px; height: 24px; border-radius: 7px; border: 2px solid var(--faint); background: var(--surface); cursor: pointer; display: grid; place-items: center; padding: 0; margin-top: 1px; }
+.box svg { width: 14px; height: 14px; opacity: 0; }
+.box[aria-checked="true"] { background: var(--main); border-color: var(--main); }
+.box[aria-checked="true"] svg { opacity: 1; }
+.box:disabled { cursor: default; opacity: .6; }
+.box path { fill: none; stroke: var(--surface); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.planned.done h3 { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--faint); }
+.detail { font-size: 13.5px; color: var(--muted); margin: 0; }
+.note { font-size: 12.5px; color: var(--faint); }
+
+footer { font-size: 12.5px; color: var(--faint); display: grid; gap: 4px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Build map · <a class="mono" id="repoLink" href="#"></a></div>
+    <h1 id="name">Swap</h1>
+    <p class="tagline" id="tagline"></p>
+    <div class="status" id="status"></div>
+    <div class="summary" id="summary"></div>
+    <div class="next" id="next"></div>
+  </header>
+
+  <div class="controls">
+    <div class="chips" id="areaChips" role="group" aria-label="Highlight changes by area"></div>
+    <button class="chip ghost" id="expandAll" type="button" aria-pressed="false">Show all details</button>
+  </div>
+
+  <main class="flow" id="flow" aria-label="Project history as a branching flow"></main>
+
+  <footer>
+    <div id="updated"></div>
+    <div>Lines and files come from each commit. Planned steps are your Play Store checklist; tick them as you go.</div>
+  </footer>
+</div>
+
+<script>
+const DATA = /*DATA*/null;
+const STEPS = /*STEPS*/[];
+
+const AREAS = [
+  { key: 'app', label: 'App' },
+  { key: 'backend', label: 'Backend' },
+  { key: 'build', label: 'Build & CI' },
+  { key: 'docs', label: 'Docs' },
+];
+const state = { area: null, expanded: false, open: new Set(), done: {}, canWrite: false, db: null };
+try { state.expanded = localStorage.getItem('swapmap.expanded') === '1'; } catch {}
+
+const $ = (s) => document.querySelector(s);
+const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+const fmtDay = (iso) => new Date(iso).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' });
+const fmtTime = (iso) => new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' });
+const dayKey = (iso) => new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+const num = (n) => n.toLocaleString('en-IN');
+
+function laneOf(e) { return e.branch === 'main' ? 0 : 1; }
+
+/* ---------- header ---------- */
+function renderHeader() {
+  const d = DATA;
+  $('#repoLink').textContent = d.repo; $('#repoLink').href = d.url;
+  $('#name').textContent = d.name;
+  $('#tagline').textContent = d.tagline;
+  const status = $('#status'); status.replaceChildren();
+  const live = el('span', 'pill live'); live.append(el('i'), document.createTextNode('Live for testers: ' + d.live));
+  const wip = el('span', 'pill wip'); wip.append(el('i'), document.createTextNode(d.next + ' on ' + d.branches[1].name));
+  status.append(live, wip);
+
+  const commits = d.events.filter((e) => e.kind === 'commit');
+  const releases = commits.filter((e) => e.release);
+  const added = commits.reduce((s, e) => s + e.add, 0);
+  const summary = $('#summary'); summary.replaceChildren();
+  [[commits.length, 'commits'], [releases.length, 'APK releases'], ['+' + num(added), 'lines written'], [d.branches.length, 'branches']]
+    .forEach(([v, l]) => { const c = el('div'); c.append(el('b', '', String(v)), el('span', '', l)); summary.append(c); });
+  renderNext();
+  $('#updated').textContent = 'History as of ' + fmtDay(d.updatedAt) + ', ' + fmtTime(d.updatedAt) + ' IST.';
+}
+
+function renderNext() {
+  const done = STEPS.filter((s) => state.done[s.id]).length;
+  const nextStep = STEPS.find((s) => !state.done[s.id]);
+  const box = $('#next'); box.replaceChildren();
+  box.append(el('div', 'label', nextStep ? 'Next step' : 'All done'));
+  box.append(el('div', 't', nextStep ? nextStep.title : 'Every step on the checklist is ticked.'));
+  const a = el('a', '', done + ' of ' + STEPS.length + ' done ↓');
+  a.href = '#step-' + (nextStep ? nextStep.id : STEPS[STEPS.length - 1].id);
+  a.addEventListener('click', (ev) => { ev.preventDefault(); const t = document.getElementById(a.hash.slice(1)); t && t.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+  box.append(a);
+  const bar = el('div', 'progress'); const fill = el('div'); fill.style.width = (STEPS.length ? (done / STEPS.length) * 100 : 0) + '%';
+  bar.append(fill); box.append(bar);
+}
+
+function renderChips() {
+  const wrap = $('#areaChips'); wrap.replaceChildren();
+  const all = el('button', 'chip', 'Everything'); all.type = 'button';
+  all.setAttribute('aria-pressed', String(state.area === null));
+  all.onclick = () => { state.area = null; renderChips(); renderFlow(); };
+  wrap.append(all);
+  AREAS.forEach((a) => {
+    const b = el('button', 'chip'); b.type = 'button';
+    const i = el('i', 'a-' + a.key); b.append(i, document.createTextNode(a.label));
+    b.setAttribute('aria-pressed', String(state.area === a.key));
+    b.onclick = () => { state.area = state.area === a.key ? null : a.key; renderChips(); renderFlow(); };
+    wrap.append(b);
+  });
+  const ex = $('#expandAll');
+  ex.setAttribute('aria-pressed', String(state.expanded));
+  ex.textContent = state.expanded ? 'Hide details' : 'Show all details';
+}
+
+/* ---------- rail ---------- */
+// lanes: which lane lines run through this row, and how (full, from-dot, to-dot, dash)
+function rail(opts) {
+  const r = el('div', 'rail');
+  for (const ln of opts.lines) {
+    const l = el('span', 'ln l' + ln.lane + (ln.part ? ' ' + ln.part : '') + (ln.dash ? ' dash' : ''));
+    r.append(l);
+  }
+  if (opts.curve) {
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg'); svg.setAttribute('viewBox', '0 0 64 26'); svg.setAttribute('aria-hidden', 'true');
+    const p = document.createElementNS(svgNS, 'path');
+    // fork: main (x18) at top -> branch dot (x46,y24). merge: branch (x46) at top -> main dot (x18,y24)
+    p.setAttribute('d', opts.curve === 'fork' ? 'M18 0 C18 16 46 8 46 24' : 'M46 0 C46 16 18 8 18 24');
+    p.setAttribute('stroke', opts.curve === 'fork' ? 'var(--branch)' : (opts.curveDash ? 'var(--faint)' : 'var(--branch)'));
+    if (opts.curveDash) p.setAttribute('stroke-dasharray', '5 5');
+    svg.append(p); r.append(svg);
+  }
+  if (opts.dot) r.append(el('span', 'dot ' + opts.dot));
+  return r;
+}
+
+/* ---------- cards ---------- */
+function areaBar(files) {
+  const total = Object.values(files || {}).reduce((s, n) => s + n, 0);
+  if (!total) return null;
+  const frag = document.createDocumentFragment();
+  const bar = el('div', 'areas'); bar.setAttribute('role', 'img');
+  const legend = el('div', 'arealegend');
+  const parts = [];
+  AREAS.forEach((a) => {
+    const n = files[a.key] || 0; if (!n) return;
+    const s = el('span', 'a-' + a.key); s.style.flex = String(n); bar.append(s);
+    const item = el('span'); item.append(el('i', 'a-' + a.key), document.createTextNode(a.label + ' ' + n));
+    legend.append(item); parts.push(a.label + ' ' + n);
+  });
+  bar.setAttribute('aria-label', 'Files changed: ' + parts.join(', '));
+  frag.append(bar, legend);
+  return frag;
+}
+
+function groupsBlock(groups, limit) {
+  const frag = document.createDocumentFragment();
+  let shown = 0, total = 0;
+  groups.forEach((g) => { total += g.items.length; });
+  for (const g of groups) {
+    if (shown >= limit) break;
+    const box = el('div', 'group');
+    if (g.label) box.append(el('div', 'gl', g.label));
+    const ul = el('ul');
+    for (const it of g.items) { if (shown >= limit) break; ul.append(el('li', '', it)); shown++; }
+    box.append(ul); frag.append(box);
+  }
+  return { frag, hidden: total - shown };
+}
+
+function commitCard(e, lane) {
+  const key = e.short;
+  const open = state.expanded || state.open.has(key);
+  const total = Object.values(e.files || {}).reduce((s, n) => s + n, 0);
+  const small = e.kind === 'commit' && !e.release && total <= 1 && e.add + e.del < 12;
+  const c = el('article', 'card' + (small ? ' small' : ''));
+  c.id = 'c-' + key;
+  if (state.area && !(e.files && e.files[state.area])) c.classList.add('dim');
+
+  c.append(el('h3', '', e.title));
+  const meta = el('div', 'meta');
+  meta.append(el('span', '', fmtTime(e.date)));
+  if (e.kind === 'commit') {
+    const a = el('a', 'mono', e.short); a.href = e.url; a.target = '_blank'; a.rel = 'noopener'; meta.append(a);
+    const ch = el('span'); ch.append(el('span', 'plus', '+' + num(e.add)), document.createTextNode(' '), el('span', 'minus', '−' + num(e.del)));
+    meta.append(ch, el('span', '', total + (total === 1 ? ' file' : ' files')));
+  } else {
+    meta.append(el('span', '', 'Supabase'));
+  }
+  c.append(meta);
+
+  const tags = el('div', 'tags');
+  if (e.release) {
+    const t = el('a', 'tag rel' + (lane ? ' l1' : ''), e.release.name + ' · ' + e.release.tag);
+    t.href = e.release.url; t.target = '_blank'; t.rel = 'noopener'; tags.append(t);
+  }
+  if (e.kind === 'deploy') tags.append(el('span', 'tag live', 'Live backend'));
+  (e.ci || []).forEach((r) => {
+    const label = r.name === 'Checks' ? (r.ok ? 'Checks passed' : 'Checks failed') : (r.ok ? 'APK built' : 'Build failed');
+    const t = el('a', 'tag ' + (r.ok ? 'ci-ok' : 'ci-bad'), (r.ok ? '✓ ' : '✕ ') + label + ' #' + r.run);
+    t.href = r.url; t.target = '_blank'; t.rel = 'noopener'; tags.append(t);
+  });
+  if (tags.childElementCount) c.append(tags);
+
+  if (!small) { const bar = areaBar(e.files); if (bar) c.append(bar); }
+
+  if (e.groups && e.groups.length) {
+    const { frag, hidden } = groupsBlock(e.groups, open ? 999 : 3);
+    c.append(frag);
+    const hasFiles = e.fileList && Object.keys(e.fileList).length;
+    if (hidden > 0 || (hasFiles && !small)) {
+      const b = el('button', 'more', open ? 'Show less' : (hidden > 0 ? hidden + ' more change' + (hidden === 1 ? '' : 's') + ' and files' : 'Show files'));
+      b.type = 'button'; b.setAttribute('aria-expanded', String(open));
+      b.onclick = () => { open ? state.open.delete(key) : state.open.add(key); renderFlow(); };
+      if (open && hasFiles) c.append(filesBlock(e));
+      c.append(b);
+    }
+  }
+  return c;
+}
+
+function filesBlock(e) {
+  const f = el('div', 'files');
+  AREAS.forEach((a) => {
+    const list = e.fileList[a.key]; if (!list) return;
+    const d = el('div'); d.append(el('b', '', a.label));
+    const extra = (e.files[a.key] || 0) - list.length;
+    d.append(document.createTextNode(list.join(' · ') + (extra > 0 ? ' · +' + extra + ' more' : '')));
+    f.append(d);
+  });
+  return f;
+}
+
+function stepCard(s) {
+  const done = !!state.done[s.id];
+  const c = el('article', 'card planned' + (done ? ' done' : ''));
+  c.id = 'step-' + s.id;
+  const row = el('div', 'check');
+  const box = el('button', 'box'); box.type = 'button';
+  box.setAttribute('role', 'checkbox'); box.setAttribute('aria-checked', String(done));
+  box.setAttribute('aria-label', (done ? 'Mark not done: ' : 'Mark done: ') + s.title);
+  box.innerHTML = '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2.5 7.5l3 3 6-7"/></svg>';
+  box.disabled = !state.db;
+  box.onclick = () => toggleStep(s.id);
+  const text = el('div'); text.style.minWidth = '0'; text.style.display = 'grid'; text.style.gap = '4px';
+  text.append(el('h3', '', s.title), el('p', 'detail', s.detail));
+  const tags = el('div', 'tags');
+  tags.append(el('span', 'tag ' + (s.cost ? 'cost' : 'free'), s.cost ? 'Paid · ' + s.cost : 'Free'));
+  if (done && state.done[s.id].at) tags.append(el('span', 'note', 'Done ' + fmtDay(state.done[s.id].at)));
+  text.append(tags);
+  row.append(box, text);
+  c.append(row);
+  return c;
+}
+
+/* ---------- flow ---------- */
+function renderFlow() {
+  const flow = $('#flow'); flow.replaceChildren();
+  const ev = DATA.events;
+  const firstBranch = ev.findIndex((e) => laneOf(e) === 1);
+  const branchOpen = DATA.branches[1] && DATA.branches[1].open;
+  const mergeStep = STEPS.find((s) => s.merges);
+  const merged = mergeStep && state.done[mergeStep.id];
+  let lastDay = null;
+
+  const day = (label, lanes) => {
+    const d = el('div', 'day');
+    d.append(rail({ lines: lanes }), el('h2', '', label));
+    flow.append(d);
+  };
+  const lanesAt = (i) => {
+    const l = [{ lane: 0 }];
+    if (firstBranch >= 0 && i > firstBranch) l.push({ lane: 1 });
+    return l;
+  };
+
+  ev.forEach((e, i) => {
+    const dk = dayKey(e.date);
+    if (dk !== lastDay) { day(fmtDay(e.date), i === 0 ? [] : lanesAt(i)); lastDay = dk; }
+    const lane = laneOf(e);
+    const lines = [];
+    // main lane runs through every row; it starts at the first dot
+    lines.push({ lane: 0, part: i === 0 ? 'from-dot' : '' });
+    let curve = null;
+    if (lane === 1) {
+      if (i === firstBranch) { curve = 'fork'; lines.push({ lane: 1, part: 'from-dot' }); }
+      else lines.push({ lane: 1 });
+    }
+    let dot = 'l' + lane + (e.release ? ' rel' : ' fill') + (e.kind === 'deploy' ? ' deploy' : '');
+    const row = el('div', 'row');
+    row.append(rail({ lines, curve, dot }), commitCard(e, lane));
+    flow.append(row);
+  });
+
+  // ---- planned steps continue the main lane ----
+  day('Next steps', lanesAt(ev.length));
+  STEPS.forEach((s, i) => {
+    const done = !!state.done[s.id];
+    const lines = [];
+    const beforeMerge = !merged && branchOpen && mergeStep && STEPS.indexOf(mergeStep) >= i;
+    const isMerge = s === mergeStep;
+    lines.push({ lane: 0, part: i === STEPS.length - 1 ? 'to-dot' : '', dash: !done });
+    let curve = null;
+    if (isMerge && branchOpen) { curve = 'merge'; lines.push({ lane: 1, part: 'to-dot', dash: !done }); }
+    else if (beforeMerge && branchOpen) lines.push({ lane: 1, dash: true });
+    const row = el('div', 'row');
+    row.append(rail({ lines, curve, curveDash: !done, dot: 'l0 step' + (done ? ' done' : '') + (isMerge ? ' merge' : '') }), stepCard(s));
+    flow.append(row);
+  });
+}
+
+/* ---------- checklist storage (shared, through the artifact's database) ---------- */
+async function toggleStep(id) {
+  if (!state.db) return;
+  const was = state.done[id];
+  const nowDone = !was;
+  state.done = { ...state.done };
+  if (nowDone) state.done[id] = { at: new Date().toISOString() }; else delete state.done[id];
+  renderNext(); renderFlow();
+  try {
+    await state.db.doc('steps/' + id).set({ done: nowDone, at: nowDone ? state.done[id].at : null });
+  } catch (err) {
+    state.done = { ...state.done };
+    if (was) state.done[id] = was; else delete state.done[id];
+    renderNext(); renderFlow();
+  }
+}
+
+async function connect() {
+  const db = window.claude && window.claude.use ? await window.claude.use('db') : null;
+  if (!db) return;
+  state.db = db;
+  renderFlow();
+  db.collection('steps').onSnapshot((snap) => {
+    const done = {};
+    snap.docs.forEach((d) => { const v = d.data(); if (v && v.done) done[d.id] = { at: v.at }; });
+    state.done = done;
+    renderNext(); renderFlow();
+  }, () => {});
+}
+
+$('#expandAll').addEventListener('click', () => {
+  state.expanded = !state.expanded; state.open.clear();
+  try { localStorage.setItem('swapmap.expanded', state.expanded ? '1' : '0'); } catch {}
+  renderChips(); renderFlow();
+});
+
+renderHeader(); renderChips(); renderFlow();
+connect();
+</script>

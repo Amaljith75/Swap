@@ -1,0 +1,62 @@
+{
+ "commitNotes": {
+  "e092df5": [
+   "Repository created on GitHub"
+  ],
+  "ff3643c": [
+   "Expo + TypeScript Android app: list items, browse nearby, offer swaps, counter-offers, chat, ratings",
+   "Supabase schema with row-level security and server-side trade rules",
+   "End-to-end SQL tests of the trade flow",
+   "GitHub Actions workflow that builds the APK"
+  ],
+  "fbece55": [
+   "App points at the live Supabase project",
+   "Database helper functions hardened"
+  ],
+  "a42d745": [
+   "CI uses the Android SDK already on the runner (fixed the failing builds)"
+  ],
+  "179fef4": [
+   "Firebase config added so Android push notifications work"
+  ],
+  "9b4a59e": [
+   "\"Update now\" downloads the new APK inside the app and opens Android's installer",
+   "No more stuck browser downloads"
+  ],
+  "9282e9a": [
+   "Update notices only go to GitHub APK installs, never to Play installs"
+  ],
+  "1d2f2a6": [
+   "Database indexes recommended by the Supabase advisor"
+  ]
+ },
+ "liveChanges": [
+  {
+   "after": "9282e9a",
+   "branch": "pre-playstore-audit",
+   "date": "2026-11-05T23:05:00+05:30",
+   "title": "Backend changes applied to the live Supabase project",
+   "items": [
+    "Database migrations 0007 to 0011 (consent, account deletion, moderation, limits, cleanup, indexes)",
+    "New server functions: delete-account and nightly maintenance",
+    "Notifications function redeployed with channel targeting"
+   ]
+  }
+ ],
+ "project": {
+  "live": "Swap V 1.1",
+  "next": "Swap V 1.2",
+  "branches": [
+   {
+    "name": "main",
+    "role": "Released builds. Every push makes a new APK for testers."
+   },
+   {
+    "name": "pre-playstore-audit",
+    "role": "Play Store fixes. Not released until merged.",
+    "from": "9b4a59e",
+    "open": true
+   }
+  ]
+ }
+}
