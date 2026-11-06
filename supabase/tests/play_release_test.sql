@@ -22,6 +22,10 @@ select check_((select terms_version from profiles where id = 'dddddddd-0000-0000
               and (select age_confirmed_at from profiles where id = 'dddddddd-0000-0000-0000-000000000004') is not null,
               'sign-up consent recorded on the profile');
 select check_((select terms_version from profiles where id = 'eeeeeeee-0000-0000-0000-000000000005') = 0, 'no consent without metadata');
+insert into auth.users (id, raw_user_meta_data) values ('ffffffff-0000-0000-0000-000000000006', '{"terms_version": 1}');
+select check_((select terms_version from profiles where id = 'ffffffff-0000-0000-0000-000000000006') = 1
+              and (select age_confirmed_at from profiles where id = 'ffffffff-0000-0000-0000-000000000006') is null,
+              'sign-up records the terms version without an age confirmation');
 set role authenticated;
 select t_as('eeeeeeee-0000-0000-0000-000000000005');
 select expect_error($$select accept_terms(1, false)$$, '18 or over');

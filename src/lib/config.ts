@@ -31,8 +31,6 @@ export const links = {
 
 /** Bump when the Terms or Privacy Policy change in a way people must agree to again. */
 export const TERMS_VERSION = 1;
-/** Minimum age to use Swap. */
-export const MIN_AGE = 18;
 /** Minimum password length for new passwords (also set this in Supabase Auth settings). */
 export const MIN_PASSWORD = 8;
 

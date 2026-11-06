@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Wordmark } from '@/components/Wordmark';
-import { MIN_AGE, isSupabaseConfigured, links } from '@/lib/config';
+import { isSupabaseConfigured, links } from '@/lib/config';
 import { colors, radius, spacing } from '@/theme/tokens';
 import { Button, Screen, Text } from '@/ui';
 
@@ -50,7 +50,6 @@ export default function Welcome() {
           onPress={() => router.push('/(auth)/sign-in?mode=signin')}
         />
         <Text variant="caption" muted style={styles.legal}>
-          For people aged {MIN_AGE}+.{' '}
           <Text variant="caption" color={colors.accent} accessibilityRole="link" onPress={() => void Linking.openURL(links.terms)}>
             Terms
           </Text>{' '}

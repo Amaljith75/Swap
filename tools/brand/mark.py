@@ -15,32 +15,41 @@ def arrow(rot):
     return (f'<g transform="rotate({rot + TILT} {C} {C})">'
             f'<path d="{arc}" fill="none" stroke="currentColor" stroke-width="{W}" stroke-linecap="round"/></g>')
 
-def svg(which='both', color='#000', size=1000, scale=1.0, bg=None, tile=None):
-    """which: 'a', 'b' or 'both'. scale shrinks the mark around the centre (for icon safe zones)."""
-    parts = ([arrow(0)] if which in ('a', 'both') else []) + ([arrow(180)] if which in ('b', 'both') else [])
-    inner = ''.join(parts)
+GRAD = ('<defs><linearGradient id="pastel" x1="0" y1="0" x2="1" y2="1">'
+        '<stop offset="0" stop-color="#F1F2A8"/><stop offset="0.5" stop-color="#C9D4F0"/>'
+        '<stop offset="1" stop-color="#EBD3EE"/></linearGradient></defs>')
+LIME, PASTEL, INK = '#B7F34A', 'url(#pastel)', '#0E0E10'
+
+def svg(which='both', color=(LIME, PASTEL), size=1000, scale=1.0, bg=None, tile=None):
+    """which: 'a', 'b' or 'both'. color: one colour, or (piece A, piece B).
+    scale shrinks the mark around the centre (for icon safe zones)."""
+    ca, cb = (color, color) if isinstance(color, str) else color
+    def piece(rot, c):
+        return arrow(rot).replace('stroke="currentColor"', f'stroke="{c}"')
+    parts = ([piece(0, ca)] if which in ('a', 'both') else []) + ([piece(180, cb)] if which in ('b', 'both') else [])
     k = scale
-    g = f'<g style="color:{color}" transform="translate({C*(1-k)} {C*(1-k)}) scale({k})">{inner}</g>'
+    g = f'<g transform="translate({C*(1-k)} {C*(1-k)}) scale({k})">{"".join(parts)}</g>'
     back = ''
     if bg: back += f'<rect width="1000" height="1000" fill="{bg}"/>'
     if tile: back += f'<rect x="{tile[0]}" y="{tile[0]}" width="{1000-2*tile[0]}" height="{1000-2*tile[0]}" rx="{tile[1]}" fill="{tile[2]}"/>'
-    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="{size}" height="{size}">{back}{g}</svg>'
+    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="{size}" height="{size}">{GRAD}{back}{g}</svg>'
 
 if __name__ == '__main__':
     out = sys.argv[1]
     jobs = {
-      # app icon (iOS / legacy Android): full white square, black mark
-      'icon.png':                     (1024, svg('both', '#0E0E10', 1024, 0.86, bg='#FFFFFF')),
-      # Android adaptive icon: white background, black mark inside the safe zone
-      'android-icon-background.png':  (1024, f'<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" fill="#FFFFFF"/></svg>'),
-      'android-icon-foreground.png':  (1024, svg('both', '#0E0E10', 1024, 0.62)),
+      # app icon (iOS / legacy Android): app-dark square, lime + pastel mark
+      'icon.png':                     (1024, svg('both', (LIME, PASTEL), 1024, 0.86, bg=INK)),
+      # Android adaptive icon: dark background, coloured mark inside the safe zone
+      'android-icon-background.png':  (1024, f'<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024"><rect width="1024" height="1024" fill="{INK}"/></svg>'),
+      'android-icon-foreground.png':  (1024, svg('both', (LIME, PASTEL), 1024, 0.62)),
+      # monochrome and notification icons must be single-colour silhouettes (Android tints them)
       'android-icon-monochrome.png':  (1024, svg('both', '#FFFFFF', 1024, 0.62)),
       'notification-icon.png':        (96,   svg('both', '#FFFFFF', 96, 1.0)),
-      'favicon.png':                  (48,   svg('both', '#0E0E10', 48, 0.84, tile=(40, 210, '#FFFFFF'))),
-      # in-app: white pieces for the intro animation, and the combined mark
-      'mark-a.png':                   (512,  svg('a', '#FFFFFF', 512, 1.0)),
-      'mark-b.png':                   (512,  svg('b', '#FFFFFF', 512, 1.0)),
-      'mark.png':                     (512,  svg('both', '#FFFFFF', 512, 1.0)),
-      'tile.png':                     (512,  svg('both', '#0E0E10', 512, 0.84, tile=(0, 230, '#FFFFFF'))),
+      'favicon.png':                  (48,   svg('both', (LIME, PASTEL), 48, 0.84, tile=(40, 210, INK))),
+      # in-app: coloured pieces for the opening animation, and the combined mark
+      'mark-a.png':                   (512,  svg('a', (LIME, PASTEL), 512, 1.0)),
+      'mark-b.png':                   (512,  svg('b', (LIME, PASTEL), 512, 1.0)),
+      'mark.png':                     (512,  svg('both', (LIME, PASTEL), 512, 1.0)),
+      'tile.png':                     (512,  svg('both', (LIME, PASTEL), 512, 0.84, tile=(0, 230, INK))),
     }
     json.dump({k: v[1] for k, v in jobs.items()}, open(out, 'w'))

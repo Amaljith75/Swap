@@ -1,11 +1,10 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, Linking, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ConsentCheck } from '@/components/ConsentCheck';
-import { MIN_AGE, MIN_PASSWORD, TERMS_VERSION, links } from '@/lib/config';
+import { MIN_PASSWORD, TERMS_VERSION, links } from '@/lib/config';
 import { errorMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { colors, spacing } from '@/theme/tokens';
@@ -38,8 +37,6 @@ export default function SignIn() {
   const [mode, setModeState] = useState<Mode>(params.mode === 'signup' ? 'signup' : 'signin');
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [consent, setConsent] = useState(false);
-  const [consentError, setConsentError] = useState(false);
   const { control, handleSubmit, formState, clearErrors } = useForm<Form>({
     resolver: (values, ctx, opts) => zodResolver(makeSchema(mode))(values, ctx, opts),
     defaultValues: { email: '', password: '' },
@@ -64,16 +61,11 @@ export default function SignIn() {
         return;
       }
       if (mode === 'signup') {
-        if (!consent) {
-          setConsentError(true);
-          setError(`Swap is only for people aged ${MIN_AGE} or over. Tick the box to continue.`);
-          return;
-        }
         const { data, error: e } = await supabase.auth.signUp({
           email: email.trim(),
           password,
-          // Recorded on the profile when the account is created (see handle_new_user).
-          options: { data: { terms_version: TERMS_VERSION, age_confirmed: true }, emailRedirectTo: links.site },
+          // Which Terms version they agreed to by signing up (recorded by handle_new_user).
+          options: { data: { terms_version: TERMS_VERSION }, emailRedirectTo: links.site },
         });
         if (e) throw e;
         if (!data.session) {
@@ -136,17 +128,17 @@ export default function SignIn() {
               />
             )}
             {mode === 'signup' && (
-              <ConsentCheck
-                checked={consent}
-                error={consentError}
-                onChange={(v) => {
-                  setConsent(v);
-                  if (v) {
-                    setConsentError(false);
-                    setError(null);
-                  }
-                }}
-              />
+              <Text variant="caption" muted>
+                By creating an account you agree to the{' '}
+                <Text variant="caption" color={colors.accent} accessibilityRole="link" onPress={() => void Linking.openURL(links.terms)}>
+                  Terms
+                </Text>{' '}
+                and{' '}
+                <Text variant="caption" color={colors.accent} accessibilityRole="link" onPress={() => void Linking.openURL(links.privacy)}>
+                  Privacy Policy
+                </Text>
+                .
+              </Text>
             )}
             {error && <Text color={colors.danger}>{error}</Text>}
             {notice && <Text color={colors.accent}>{notice}</Text>}

@@ -12,7 +12,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { IntroAnimation } from '@/components/IntroAnimation';
 import { UpdatePrompt } from '@/components/UpdatePrompt';
 import { registerForPush, useNotificationRouting, usePushTokenRefresh } from '@/lib/notifications';
-import { TERMS_VERSION, isSupabaseConfigured } from '@/lib/config';
+import { isSupabaseConfigured } from '@/lib/config';
 import { installGlobalErrorHandler, logError, setErrorRoute } from '@/lib/errorLog';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/store/session';
@@ -73,7 +73,7 @@ function AuthGate() {
   useEffect(() => setErrorRoute(pathname), [pathname]);
   const me = useMe();
   useInboxRealtime();
-  const signedIn = !!session && !!me.data?.onboarded && (me.data?.terms_version ?? 0) >= TERMS_VERSION;
+  const signedIn = !!session && !!me.data?.onboarded;
   useNotificationRouting(signedIn);
   usePushTokenRefresh(signedIn);
   useEffect(() => {
@@ -100,9 +100,7 @@ function AuthGate() {
   const first = segments[0] as string | undefined;
   const inAuth = first === '(auth)';
   const inOnboarding = first === 'onboarding';
-  const inConsent = first === 'consent';
   const atIndex = !first;
-  const needsConsent = !!session && me.data !== undefined && (me.data.terms_version ?? 0) < TERMS_VERSION;
   const needsOnboarding = !!session && me.data !== undefined && !me.data.onboarded;
 
   // A shared item link opened before sign-in: show that item once the person is in.
@@ -115,11 +113,9 @@ function AuthGate() {
         if (/^\/item\/[0-9a-f-]{36}$/i.test(pathname)) pendingItem.current = pathname;
         router.replace('/(auth)/welcome');
       }
-    } else if (needsConsent) {
-      if (!inConsent) router.replace('/consent');
     } else if (needsOnboarding) {
       if (!inOnboarding) router.replace('/onboarding');
-    } else if ((me.data || me.isError) && (inAuth || inOnboarding || inConsent || atIndex)) {
+    } else if ((me.data || me.isError) && (inAuth || inOnboarding || atIndex)) {
       router.replace('/(tabs)');
       if (pendingItem.current) {
         const target = pendingItem.current;
@@ -127,7 +123,7 @@ function AuthGate() {
         router.push(target as `/item/${string}`);
       }
     }
-  }, [ready, session, needsConsent, needsOnboarding, me.data, me.isError, inAuth, inOnboarding, inConsent, atIndex, router, pathname]);
+  }, [ready, session, needsOnboarding, me.data, me.isError, inAuth, inOnboarding, atIndex, router, pathname]);
 
   if (!ready) {
     return (
