@@ -3,6 +3,9 @@ name: Build Android APK
 # The sideload build (GitHub Releases, updates itself in the app).
 # The Google Play build is made by android-play.yml instead.
 # Runs on every push to main, or by hand from the Actions tab ("Run workflow").
+# Run by hand on any other branch, it makes a TEST BUILD: a GitHub pre-release.
+# Installed apps only look at the latest full release, so testers are not told
+# about test builds; install one by hand to try it.
 on:
   workflow_dispatch:
   push:
@@ -80,9 +83,12 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: Swap V ${{ steps.apk.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: Swap V ${{ steps.apk.outputs.version }}${{ github.ref_name != 'main' && ' (test build)' || '' }}
+          prerelease: ${{ github.ref_name != 'main' }}
+          make_latest: ${{ github.ref_name == 'main' && 'true' || 'false' }}
           body: |
-            Swap V ${{ steps.apk.outputs.version }} (build ${{ github.run_number }}).
+            Swap V ${{ steps.apk.outputs.version }} (build ${{ github.run_number }})${{ github.ref_name != 'main' && ', test build from the ' || '' }}${{ github.ref_name != 'main' && github.ref_name || '' }}${{ github.ref_name != 'main' && ' branch. Testers are not notified.' || '.' }}
             Install the .apk below on your Android phone. It installs over the previous version.
             Built from ${{ github.sha }}.
           files: swap-${{ github.run_number }}.apk
