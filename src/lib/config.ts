@@ -20,6 +20,8 @@ const SITE = (process.env.EXPO_PUBLIC_SITE_URL || 'https://amaljith75.github.io/
 export const links = {
   /** Landing page; also where "confirm your email" links end up. */
   site: `${SITE}/`,
+  /** Page a shared item link opens: shows the item and an "Open in Swap" button. */
+  item: (id: string) => `${SITE}/item.html?id=${id}`,
   privacy: `${SITE}/privacy.html`,
   terms: `${SITE}/terms.html`,
   deleteAccount: `${SITE}/delete-account.html`,
@@ -37,8 +39,9 @@ export const MIN_PASSWORD = 8;
 export const limits = {
   maxPhotos: 4,
   maxOfferItems: 5,
-  radiusOptionsKm: [1, 5, 10, 25],
-  defaultRadiusKm: 5,
+  /** Distance filters on Explore; 0 means everywhere. */
+  radiusOptionsKm: [0, 1, 10, 25],
+  defaultRadiusKm: 0,
   pageSize: 30,
 } as const;
 

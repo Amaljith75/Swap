@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -95,7 +95,7 @@ export default function SignIn() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <Header onBack={() => (mode === 'reset' ? setMode('signin') : router.replace('/(auth)/welcome'))} />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
         <Screen style={styles.body}>
           <Text variant="display">{title}</Text>
           <Text muted>{subtitle}</Text>

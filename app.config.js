@@ -48,6 +48,7 @@ module.exports = ({ config }) => {
       ...(config.plugins || []),
       ['react-native-maps', { androidGoogleMapsApiKey: mapsKey || undefined }],
       './plugins/withReleaseSigning',
+      './plugins/withAndroidPlayTweaks',
     ],
     extra: { ...config.extra, build, channel, pushConfigured: hasFirebase },
   };

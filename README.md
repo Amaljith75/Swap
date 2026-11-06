@@ -94,6 +94,16 @@ Limits can be changed without an app update, in the `app_config` table:
 4. **Supabase Auth** (Authentication → URL Configuration): Site URL `https://amaljith75.github.io/swap/`; Redirect URLs add `https://amaljith75.github.io/swap/**`. Under Sign In / Providers → Email: minimum password length 8.
 5. Actions → **Build for Google Play (AAB)** → Run workflow. Download the `.aab` from the run and upload it in Play Console.
 
+## Sharing items
+
+The share button on an item opens the phone's share sheet (WhatsApp, Instagram, Telegram, SMS and so on) with a link to
+`docs/item.html?id=<item>`. That page shows a preview of the item and an **Open in Swap** button, which opens the item in
+the app if it's installed and otherwise goes to the Google Play listing. Once Swap is live on Play, set `PLAY_LIVE: true`
+in `docs/site.js` so the page also shows a "Get Swap on Google Play" button.
+
+The web pages' address is one setting: `EXPO_PUBLIC_SITE_URL` (or the default in `src/lib/config.ts`) for the app, and
+wherever `docs/` is hosted.
+
 ## Error reports
 
 Uncaught errors and screen crashes are sent to the `client_errors` table (Table Editor → `client_errors`), with the screen, build and phone model. Rows are deleted after 90 days. A nightly job (`maintenance` Edge Function) also deletes photo files nothing uses any more.

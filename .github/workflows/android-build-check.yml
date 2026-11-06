@@ -1,0 +1,82 @@
+name: Android build check
+
+# Builds the release APK for both channels (GitHub sideload and Google Play) and
+# checks what Play cares about. Publishes nothing and notifies nobody.
+# Runs on pushes to work branches (not main) and by hand from the Actions tab.
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore: [main]
+    paths-ignore: ['docs/**', 'tools/**', '**.md']
+
+concurrency:
+  group: android-build-check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Release build (${{ matrix.channel }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        channel: [sideload, play]
+    env:
+      APP_CHANNEL: ${{ matrix.channel }}
+      BUILD_NUMBER: 900000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - run: npm ci
+      - name: Generate the native Android project
+        run: npx expo prebuild --platform android --no-install
+        env:
+          CI: 1
+      - name: Build release APK
+        working-directory: android
+        env:
+          NODE_ENV: production
+        run: ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+
+      - name: Check the APK against Play requirements
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          "$BT/aapt2" dump badging "$APK" > badging.txt
+          "$BT/aapt2" dump permissions "$APK" > perms.txt
+          echo "### $APP_CHANNEL build" >> "$GITHUB_STEP_SUMMARY"
+          grep -E "^(package|sdkVersion|targetSdkVersion|compileSdkVersion)" badging.txt | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"; grep -o "name='[^']*'" perms.txt | sort -u | tee -a "$GITHUB_STEP_SUMMARY"; echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fail=0
+          target=$(sed -n "s/^targetSdkVersion:'\([0-9]*\)'/\1/p" badging.txt)
+          [ "${target:-0}" -ge 36 ] || { echo "::error::targetSdk is $target, Google Play needs 36 or higher"; fail=1; }
+          for p in SYSTEM_ALERT_WINDOW USE_BIOMETRIC USE_FINGERPRINT FOREGROUND_SERVICE_LOCATION ACCESS_BACKGROUND_LOCATION READ_MEDIA_IMAGES READ_MEDIA_VIDEO RECORD_AUDIO; do
+            if grep -q "android.permission.$p'" perms.txt; then echo "::error::Unexpected permission $p"; fail=1; fi
+          done
+          if [ "$APP_CHANNEL" = play ] && grep -q "REQUEST_INSTALL_PACKAGES'" perms.txt; then
+            echo "::error::The Play build must not ask for REQUEST_INSTALL_PACKAGES"; fail=1
+          fi
+          # 16 KB pages: zip alignment of stored native libraries, then ELF segment alignment.
+          "$BT/zipalign" -c -P 16 -v 4 "$APK" > zipalign.txt || { echo "::error::Native libraries are not 16 KB zip-aligned"; fail=1; }
+          mkdir -p so && unzip -q -o "$APK" 'lib/arm64-v8a/*' -d so
+          for so in so/lib/arm64-v8a/*.so; do
+            for a in $(readelf -lW "$so" | awk '$1=="LOAD"{print $NF}'); do
+              [ $((a)) -ge 16384 ] || { echo "::error::$(basename "$so") LOAD alignment $a (needs 0x4000)"; fail=1; }
+            done
+          done
+          echo "APK size: $(du -h "$APK" | cut -f1)" | tee -a "$GITHUB_STEP_SUMMARY"
+          exit $fail

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Dimensions, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Dimensions, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +7,7 @@ import { useListing, useListingArea, useListingDistance } from '@/api/listings';
 import { AreaMap } from '@/components/AreaMap';
 import { useMyOpenOfferOn } from '@/api/offers';
 import { TrustLine } from '@/components/TrustLine';
-import { categoryLabel, conditionLabel } from '@/lib/config';
+import { categoryLabel, conditionLabel, links } from '@/lib/config';
 import { formatDistance, timeAgo } from '@/lib/format';
 import { useLocation } from '@/lib/location';
 import { useUserId } from '@/store/session';
@@ -15,6 +15,19 @@ import { colors, radius, spacing } from '@/theme/tokens';
 import { Avatar, Button, EmptyState, ErrorView, Header, HeaderIcon, Loading, Photo, Text } from '@/ui';
 
 const W = Dimensions.get('window').width;
+
+/** Opens the phone's share sheet (WhatsApp, Instagram, Telegram, SMS, ...) with a link to the item. */
+async function shareItem(id: string, title: string, mine: boolean) {
+  const url = links.item(id);
+  const message = mine
+    ? `I'm swapping my ${title} on Swap. Got something to trade? ${url}`
+    : `Check out "${title}" on Swap, the app for swapping things nearby. ${url}`;
+  try {
+    await Share.share({ message, title }, { dialogTitle: 'Share this item' });
+  } catch {
+    // the person closed the share sheet
+  }
+}
 
 export default function ItemScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -57,13 +70,18 @@ export default function ItemScreen() {
       <Header
         floating
         right={
-          !mine ? (
-            <HeaderIcon
-              icon="flag-outline"
-              label="Report this item"
-              onPress={() => router.push({ pathname: '/report', params: { user: l.owner_id, listing: l.id } })}
-            />
-          ) : undefined
+          <>
+            {!unavailable && (
+              <HeaderIcon icon="share-social-outline" label="Share this item" onPress={() => void shareItem(l.id, l.title, mine)} />
+            )}
+            {!mine && (
+              <HeaderIcon
+                icon="flag-outline"
+                label="Report this item"
+                onPress={() => router.push({ pathname: '/report', params: { user: l.owner_id, listing: l.id } })}
+              />
+            )}
+          </>
         }
       />
       <ScrollView contentContainerStyle={{ paddingBottom: 140 + insets.bottom }}>

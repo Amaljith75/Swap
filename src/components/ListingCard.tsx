@@ -8,16 +8,18 @@ export function ListingCard({ item, onPress }: { item: NearbyListing; onPress: (
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${item.title}, ${formatDistance(item.distance_km)}`}
+      accessibilityLabel={item.distance_km == null ? item.title : `${item.title}, ${formatDistance(item.distance_km)}`}
       onPress={onPress}
       style={({ pressed }) => [styles.card, { opacity: pressed ? 0.85 : 1 }]}
     >
       <Photo thumb path={item.photos[0]} style={styles.photo} radius={radius.md} label={item.title} />
-      <View style={styles.distance}>
-        <Text variant="caption" color={colors.accentText} style={styles.distanceText}>
-          {formatDistance(item.distance_km)}
-        </Text>
-      </View>
+      {item.distance_km != null && (
+        <View style={styles.distance}>
+          <Text variant="caption" color={colors.accentText} style={styles.distanceText}>
+            {formatDistance(item.distance_km)}
+          </Text>
+        </View>
+      )}
       <View style={styles.body}>
         <Text variant="heading" numberOfLines={1}>
           {item.title}

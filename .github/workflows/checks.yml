@@ -27,6 +27,8 @@ jobs:
       - run: npm ci
       - name: Typecheck
         run: npm run typecheck
+      - name: Expo Doctor (config, package versions, native module checks)
+        run: npx expo-doctor@1.17.11
       - name: Bundle the Android JavaScript
         run: npx expo export --platform android --output-dir /tmp/export
         env:

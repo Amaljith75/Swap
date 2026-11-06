@@ -1,6 +1,8 @@
 // Runs on a schedule (pg_cron). Looks at the latest GitHub Release; if its build
 // number is newer than the one recorded in app_config, records it and queues an
-// "update available" notification for everyone (via publish_release()).
+// "update available" notification for sideload installs (via publish_release()).
+// publish_release() stores Swap's own download address (app-download), so the
+// app never sees a GitHub link.
 // The repo must be public for the unauthenticated GitHub API call to work.
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'jsr:@supabase/supabase-js@2';
@@ -24,7 +26,7 @@ Deno.serve(async () => {
   if (!build || !apk) return json({ skipped: 'no apk release' });
   const { data, error } = await sb.rpc('publish_release', {
     p_build: build,
-    p_url: apk.browser_download_url,
+    p_url: '', // ignored: publish_release() builds the app-download address itself
     p_name: rel.name ?? `Build ${build}`,
   });
   if (error) return json({ error: error.message }, 500);

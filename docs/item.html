@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Swap item</title>
+  <meta name="description" content="Someone shared an item from Swap, the app for swapping things with people nearby.">
+  <meta property="og:title" content="An item on Swap">
+  <meta property="og:description" content="Swap items with people near you. No money involved.">
+  <link rel="stylesheet" href="style.css">
+  <script src="site.js"></script>
+  <style>
+    .item { display: grid; gap: 14px; }
+    .photo { width: 100%; aspect-ratio: 1; border-radius: 20px; background: var(--surface); object-fit: cover; display: block; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .chip { font-size: 13px; padding: 4px 12px; border-radius: 999px; background: var(--surface); color: var(--muted); }
+    .chip.gone { color: var(--danger); }
+    .actions { display: grid; gap: 10px; }
+    .actions a { display: grid; place-items: center; min-height: 50px; border-radius: 999px; font-weight: 700; text-decoration: none; }
+    .open { background: var(--accent); color: var(--accent-text); }
+    .store { border: 2px solid var(--raised); color: var(--text); }
+    .soon { text-align: center; color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+<main>
+  <header class="site"><span class="logo">⇄</span><a href="./">Swap</a></header>
+
+  <div id="loading" class="muted">Loading the item…</div>
+
+  <div id="item" class="item hidden">
+    <img id="photo" class="photo" alt="">
+    <h1 id="title"></h1>
+    <div class="chips" id="chips"></div>
+    <p id="wants" class="muted"></p>
+    <div class="actions">
+      <a id="open" class="open" href="#">Open in Swap</a>
+      <a id="store" class="store hidden" href="#">Get Swap on Google Play</a>
+      <p id="soon" class="soon hidden">Swap is coming to Google Play soon.</p>
+    </div>
+    <p class="muted">Swap lets you trade things you no longer use for things you want, with people near you. No money involved.
+      For people aged 18+.</p>
+  </div>
+
+  <div id="missing" class="card hidden">
+    <h1>This item isn't available</h1>
+    <p>It may have been swapped or removed. Open Swap to find other items near you.</p>
+  </div>
+
+  <footer>
+    <a href="./">Home</a> · <a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms of Use</a>
+  </footer>
+</main>
+<script>
+  const PKG = 'com.swap.barter';
+  const STORE_URL = 'https://play.google.com/store/apps/details?id=' + PKG;
+  const CATEGORIES = { electronics: 'Electronics', books: 'Books', clothing: 'Clothing', home: 'Home', sports: 'Sports',
+    toys: 'Toys & games', music: 'Music', hobbies: 'Hobbies', tools: 'Tools', other: 'Other' };
+  const CONDITIONS = { new: 'New', like_new: 'Like new', good: 'Good', fair: 'Fair' };
+  const $ = (id) => document.getElementById(id);
+  const show = (id) => $(id).classList.remove('hidden');
+
+  const id = new URLSearchParams(location.search).get('id') || '';
+  const valid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+  // Opens the app on this item when Swap is installed; otherwise Android falls back to
+  // the Play Store listing (live once Swap is published).
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  $('open').href = isAndroid
+    ? 'intent://item/' + id + '#Intent;scheme=swap;package=' + PKG + ';S.browser_fallback_url=' + encodeURIComponent(STORE_URL) + ';end'
+    : 'swap://item/' + id;
+  if (SWAP.PLAY_LIVE) { $('store').href = STORE_URL; show('store'); } else { show('soon'); }
+
+  const photoUrl = (p) => {
+    if (!p) return '';
+    const path = /\/p2-[^/]+\.jpg$/.test(p) ? p.replace(/\.jpg$/, '.t.jpg') : p;
+    return SWAP.SUPABASE_URL + '/storage/v1/object/public/media/' + path.split('/').map(encodeURIComponent).join('/');
+  };
+
+  async function load() {
+    if (!valid) throw new Error('bad id');
+    const res = await fetch(SWAP.SUPABASE_URL + '/rest/v1/rpc/listing_preview', {
+      method: 'POST',
+      headers: { apikey: SWAP.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SWAP.SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_id: id }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const rows = await res.json();
+    return rows[0] || null;
+  }
+
+  load().then((it) => {
+    $('loading').classList.add('hidden');
+    if (!it) { show('missing'); return; }
+    document.title = it.title + ' on Swap';
+    $('title').textContent = it.title;
+    const src = photoUrl(it.photo);
+    if (src) { $('photo').src = src; $('photo').alt = it.title; } else { $('photo').remove(); }
+    const chips = $('chips');
+    [CATEGORIES[it.category] || 'Other', CONDITIONS[it.condition] || ''].filter(Boolean).forEach((t) => {
+      const c = document.createElement('span'); c.className = 'chip'; c.textContent = t; chips.append(c);
+    });
+    if (!it.available) { const c = document.createElement('span'); c.className = 'chip gone'; c.textContent = 'Already swapped or reserved'; chips.append(c); }
+    $('wants').textContent = it.looking_for ? 'Looking for: ' + it.looking_for : 'Open to offers';
+    show('item');
+  }).catch(() => {
+    $('loading').classList.add('hidden');
+    show('missing');
+  });
+</script>
+</body>
+</html>

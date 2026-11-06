@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { ActivityIndicator, AppState, Platform, View } from 'react-native';
 import { Stack, usePathname, useRouter, useSegments, type ErrorBoundaryProps } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -103,18 +103,29 @@ function AuthGate() {
   const needsConsent = !!session && me.data !== undefined && (me.data.terms_version ?? 0) < TERMS_VERSION;
   const needsOnboarding = !!session && me.data !== undefined && !me.data.onboarded;
 
+  // A shared item link opened before sign-in: show that item once the person is in.
+  const pendingItem = useRef<string | null>(null);
+
   useEffect(() => {
     if (!ready) return;
     if (!session) {
-      if (!inAuth) router.replace('/(auth)/welcome');
+      if (!inAuth) {
+        if (/^\/item\/[0-9a-f-]{36}$/i.test(pathname)) pendingItem.current = pathname;
+        router.replace('/(auth)/welcome');
+      }
     } else if (needsConsent) {
       if (!inConsent) router.replace('/consent');
     } else if (needsOnboarding) {
       if (!inOnboarding) router.replace('/onboarding');
     } else if ((me.data || me.isError) && (inAuth || inOnboarding || inConsent || atIndex)) {
       router.replace('/(tabs)');
+      if (pendingItem.current) {
+        const target = pendingItem.current;
+        pendingItem.current = null;
+        router.push(target as `/item/${string}`);
+      }
     }
-  }, [ready, session, needsConsent, needsOnboarding, me.data, me.isError, inAuth, inOnboarding, inConsent, atIndex, router]);
+  }, [ready, session, needsConsent, needsOnboarding, me.data, me.isError, inAuth, inOnboarding, inConsent, atIndex, router, pathname]);
 
   if (!ready) {
     return (

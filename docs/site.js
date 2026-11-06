@@ -4,6 +4,9 @@
 // before submitting the app (a dedicated address like swap.support@... is best).
 window.SWAP = {
   CONTACT_EMAIL: '',
+  // Set to true once Swap is published on Google Play: shared item pages then show a
+  // "Get Swap on Google Play" button instead of "coming soon".
+  PLAY_LIVE: false,
   SUPABASE_URL: 'https://vwkaohiukqmotwesdqvi.supabase.co',
   // Public anon key (the same one inside the app). Row-level security protects the data.
   SUPABASE_ANON_KEY:

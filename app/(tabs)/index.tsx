@@ -32,9 +32,16 @@ export default function Explore() {
     return () => clearTimeout(t);
   }, [search]);
 
+  // Without a location only "Everywhere" can be searched (newest first, no distances).
+  const located = !!coords;
+  const effectiveRadius = located ? radiusKm : 0;
+  const locating = status === 'idle' || status === 'loading';
   const params = useMemo(
-    () => (coords ? { lat: coords.lat, lng: coords.lng, radiusKm, category, query } : null),
-    [coords, radiusKm, category, query],
+    () =>
+      locating && !coords
+        ? null
+        : { lat: coords?.lat ?? null, lng: coords?.lng ?? null, radiusKm: effectiveRadius, category, query },
+    [locating, coords, effectiveRadius, category, query],
   );
   const nearby = useNearby(params);
   const items = useMemo(() => nearby.data?.pages.flat() ?? [], [nearby.data]);
@@ -63,7 +70,7 @@ export default function Explore() {
         <TextInput
           value={search}
           onChangeText={setSearch}
-          placeholder="Search items"
+          placeholder="Search every item on Swap"
           placeholderTextColor={colors.textMuted}
           style={styles.searchInput}
           returnKeyType="search"
@@ -90,47 +97,64 @@ export default function Explore() {
       </ScrollView>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.radiusRow}>
         <Ionicons name="location-outline" size={16} color={colors.textMuted} />
-        <Text variant="caption" muted>
-          Within
-        </Text>
         {limits.radiusOptionsKm.map((r) => (
-          <Chip key={r} label={`${r} km`} selected={radiusKm === r} onPress={() => setRadiusKm(r)} />
+          <Chip
+            key={r}
+            label={r === 0 ? 'Everywhere' : `Within ${r} km`}
+            selected={effectiveRadius === r}
+            onPress={() => (r === 0 || located ? setRadiusKm(r) : void request())}
+          />
         ))}
       </ScrollView>
+      {!located && !locating && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => (status === 'denied' ? void Linking.openSettings() : void request())}
+          style={styles.notice}
+        >
+          <Ionicons name="navigate-outline" size={16} color={colors.warning} />
+          <Text variant="caption" style={{ flex: 1 }}>
+            {status === 'denied'
+              ? 'Location is off, so distances are hidden. Tap to allow it in Settings.'
+              : 'Couldn\'t find your location, so distances are hidden. Tap to try again.'}
+          </Text>
+        </Pressable>
+      )}
+      {items.length > 0 && (
+        <Text variant="caption" muted>
+          {effectiveRadius === 0
+            ? located
+              ? 'Every item on Swap, nearest first'
+              : 'Every item on Swap, newest first'
+            : `Items within ${effectiveRadius} km, nearest first`}
+        </Text>
+      )}
     </View>
   );
 
   let empty: React.ReactNode;
-  if (status === 'loading' || status === 'idle') empty = <Loading label="Finding your area…" />;
-  else if (status === 'denied')
-    empty = (
-      <EmptyState
-        icon="location-outline"
-        title="Location is off"
-        body="Swap needs your approximate location to show items near you. It is never shown to anyone."
-        action={{ label: 'Open settings', onPress: () => void Linking.openSettings() }}
-      />
-    );
-  else if (status === 'error')
-    empty = (
-      <EmptyState
-        icon="location-outline"
-        title="Location unavailable"
-        body="Turn on location (GPS) and try again."
-        action={{ label: 'Try again', onPress: () => void request() }}
-      />
-    );
+  if (!params) empty = <Loading label="Finding your area…" />;
   else if (nearby.isLoading) empty = <Loading />;
   else if (nearby.isError) empty = <ErrorView error={nearby.error} onRetry={() => void nearby.refetch()} />;
   else
     empty = (
       <EmptyState
         icon="cube-outline"
-        title={query || category ? 'No matches nearby' : 'Nothing listed nearby yet'}
-        body={
+        title={
           query || category
-            ? 'Try a wider distance or another category.'
-            : 'Be the first. List something you no longer use and see what people offer.'
+            ? effectiveRadius === 0
+              ? 'No matches on Swap'
+              : `No matches within ${effectiveRadius} km`
+            : effectiveRadius === 0
+              ? 'Nothing listed yet'
+              : `Nothing within ${effectiveRadius} km yet`
+        }
+        body={
+          effectiveRadius !== 0
+            ? 'Try Everywhere to see every item on Swap.'
+            : query || category
+              ? 'Try other words or another category.'
+              : 'Be the first. List something you no longer use and see what people offer.'
         }
         action={{ label: 'List an item', onPress: () => router.push('/item/new') }}
       />
@@ -198,4 +222,12 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, color: colors.text, fontSize: 16, paddingVertical: 12 },
   chips: { gap: spacing.sm },
   radiusRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
 });

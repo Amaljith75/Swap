@@ -1,6 +1,7 @@
 export function formatDistance(km: number | null | undefined): string {
   if (km == null) return '';
   if (km <= 0.5) return 'Under 1 km';
+  if (km >= 10) return `${Math.round(km).toLocaleString('en-IN')} km away`;
   return `${km % 1 === 0 ? km.toFixed(0) : km.toFixed(1)} km away`;
 }
 

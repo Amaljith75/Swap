@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Linking, Modal, StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { cleanOldUpdates, useInstallUpdate } from '@/lib/installUpdate';
 import { currentBuild, useUpdateAvailable } from '@/lib/updates';
@@ -57,7 +57,7 @@ export function UpdateBody() {
   if (install.phase === 'error') {
     return (
       <Text color={colors.danger} style={styles.center}>
-        {install.error} Check your connection and try again.
+        {install.error} Check your connection and tap Try again.
       </Text>
     );
   }
@@ -82,9 +82,6 @@ export function UpdateActions({ onLater }: { onLater?: () => void }) {
         loading={busy}
         onPress={() => void install.start(release.url!, release.build)}
       />
-      {install.phase === 'error' && (
-        <Button label="Download in browser instead" variant="secondary" onPress={() => void Linking.openURL(release.url!)} />
-      )}
       {onLater && !busy && <Button label="Later" variant="ghost" onPress={onLater} />}
     </View>
   );

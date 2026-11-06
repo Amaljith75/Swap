@@ -35,12 +35,20 @@ export const useInstallUpdate = create<InstallState>((set, get) => ({
     try {
       const target = apkPath(build);
       const existing = await FileSystem.getInfoAsync(target);
-      if (!existing.exists || (existing.size ?? 0) < 1_000_000) {
-        const task = FileSystem.createDownloadResumable(url, target, {}, (p) => {
+      if (!existing.exists) {
+        // Download to a temporary name and only keep the file once it's complete,
+        // so a dropped connection never leaves a half-downloaded installer behind.
+        const part = `${target}.part`;
+        await FileSystem.deleteAsync(part, { idempotent: true });
+        const task = FileSystem.createDownloadResumable(url, part, {}, (p) => {
           if (p.totalBytesExpectedToWrite > 0) set({ progress: p.totalBytesWritten / p.totalBytesExpectedToWrite });
         });
         const res = await task.downloadAsync();
-        if (!res || res.status !== 200) throw new Error(`Download failed (${res?.status ?? 'no response'}).`);
+        if (!res || res.status !== 200) {
+          await FileSystem.deleteAsync(part, { idempotent: true });
+          throw new Error('The download didn\'t finish.');
+        }
+        await FileSystem.moveAsync({ from: part, to: target });
       }
       set({ phase: 'installing', progress: 1 });
       const contentUri = await FileSystem.getContentUriAsync(target);
@@ -64,7 +72,7 @@ export async function cleanOldUpdates(currentBuild: number) {
     const files = await FileSystem.readDirectoryAsync(FileSystem.cacheDirectory);
     await Promise.all(
       files
-        .filter((f) => /^swap-update-(\d+)\.apk$/.test(f) && Number(f.match(/(\d+)/)![1]) <= currentBuild)
+        .filter((f) => /^swap-update-(\d+)\.apk(\.part)?$/.test(f) && Number(f.match(/(\d+)/)![1]) <= currentBuild)
         .map((f) => FileSystem.deleteAsync(`${FileSystem.cacheDirectory}${f}`, { idempotent: true })),
     );
   } catch {

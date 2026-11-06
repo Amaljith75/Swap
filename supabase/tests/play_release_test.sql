@@ -169,4 +169,32 @@ select check_(release_removed_listing_photos() = 1, 'photos of long-removed, nev
 select check_((select count(*) from orphan_media_paths() n where n like '%p2-keep%') = 2, 'released photos become orphans');
 select purge_old_rows();
 
+-- ---------- Browse everything (0012) ----------
+set role authenticated;
+select t_as('aaaaaaaa-0000-0000-0000-000000000001');
+insert into t_ids values ('a_far', create_listing('Sitar', '', 'music', 'good', '', array['aaaaaaaa-0000-0000-0000-000000000001/s.jpg'], 19.07, 72.87));
+select t_as('eeeeeeee-0000-0000-0000-000000000005');
+select check_(not exists (select 1 from nearby_listings(12.98, 77.60, 25) where id = id_('a_far')), '25 km filter leaves out Mumbai');
+select check_(exists (select 1 from nearby_listings(12.98, 77.60, 0, null, null, 50) where id = id_('a_far')), 'Everywhere includes far items');
+select check_((select distance_km from nearby_listings(12.98, 77.60, 0, null, null, 50) where id = id_('a_far')) > 800, 'far item shows its distance in km');
+select check_((select distance_km from nearby_listings(12.98, 77.60, 0, null, null, 50) limit 1)
+              <= (select max(distance_km) from nearby_listings(12.98, 77.60, 0, null, null, 50)), 'Everywhere is nearest first');
+select check_((select count(*) from nearby_listings(null, null, 0, null, 'sitar')) = 1
+              and (select distance_km from nearby_listings(null, null, 0, null, 'sitar')) is null, 'search everything without location, no distance');
+select expect_error($$select * from nearby_listings(null, null, 5)$$, 'Location is needed');
+select check_((select count(*) from nearby_listings(12.98, 77.60, 1)) <= (select count(*) from nearby_listings(12.98, 77.60, 10)), '1 km is a subset of 10 km');
+reset role;
+
+-- ---------- Shared item preview (0012) ----------
+set role anon;
+select check_((select title from listing_preview(id_('a_far'))) = 'Sitar', 'anyone with the link sees the item preview');
+select check_((select count(*) from listing_preview(id_('d2'))) = 0, 'items of deleted accounts are not previewed');
+select expect_error($$select lat from listings limit 1$$, 'permission denied');
+reset role;
+
+-- ---------- Neutral update link (0012) ----------
+select check_(publish_release(8, 'https://github.com/someone/x.apk', 'Swap V 1.2'), 'release 8 recorded');
+select check_((select value->>'url' from app_config where key = 'latest_release') = app_download_url(8), 'release link is Swap''s own address');
+select check_((select data->>'url' from notification_queue where data->>'build' = '8') not like '%github%', 'update notice has no GitHub link');
+
 \echo PLAY RELEASE TESTS PASSED

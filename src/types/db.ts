@@ -64,7 +64,8 @@ export interface NearbyListing {
   owner_avatar: string | null;
   owner_rating: number | null;
   owner_trades: number;
-  distance_km: number;
+  /** Rounded to 0.5 km; null when the viewer's location is unknown. */
+  distance_km: number | null;
 }
 
 export interface Offer {

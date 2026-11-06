@@ -7,8 +7,10 @@ import { qk } from './keys';
 import { LISTING_COLS, PROFILE_LITE } from './select';
 
 export interface NearbyParams {
-  lat: number;
-  lng: number;
+  /** Null when location is off: then only "Everywhere" works (newest first, no distances). */
+  lat: number | null;
+  lng: number | null;
+  /** 0 = everywhere (every available item, nearest first). */
   radiusKm: number;
   category: string | null;
   query: string;
