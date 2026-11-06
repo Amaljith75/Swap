@@ -1,13 +1,64 @@
 [
- {"id": "merge", "merges": true, "title": "Merge the Play Store fixes into main", "detail": "Builds Swap V 1.2 as an APK. Testers get an \"update available\" notice."},
- {"id": "test", "title": "Test V 1.2 on your phone", "detail": "Sign up, accept the 18+ screen, list an item, swap with a second account, report someone, then delete a test account."},
- {"id": "pages", "title": "Turn on GitHub Pages", "detail": "Repo Settings → Pages → Deploy from branch main, folder /docs. Publishes the privacy, terms and delete-account pages."},
- {"id": "contact", "title": "Add a contact email", "detail": "Put the address people can write to in docs/site.js. Google Play needs a working contact."},
- {"id": "auth", "title": "Set Supabase sign-in settings", "detail": "Site URL and redirect URLs to the GitHub Pages address, and a minimum password length of 8."},
- {"id": "admin", "title": "Make yourself an admin", "detail": "Supabase Table Editor → admin_users → add your user id. Unlocks the Reports screen."},
- {"id": "key", "title": "Create an upload key", "detail": "Generate it once with keytool and add the four UPLOAD_* secrets to the repo."},
- {"id": "console", "cost": "$25 one-time", "title": "Register a Google Play developer account", "detail": "Play Console sign-up and identity check."},
- {"id": "aab", "title": "Build the Play bundle and start a closed test", "detail": "Run \"Build for Google Play (AAB)\". New personal accounts need 12 testers for 14 days before production."},
- {"id": "listing", "title": "Fill in the store listing and Data safety form", "detail": "Screenshots, description, content rating, target audience 18+, and the privacy policy link."},
- {"id": "launch", "title": "Release to production", "detail": "Submit for review and roll out Swap on Google Play."}
+ {
+  "id": "merge",
+  "merges": true,
+  "title": "Merge the Play Store fixes into main",
+  "detail": "Builds Swap V 1.2 as an APK. Testers get an \"update available\" notice."
+ },
+ {
+  "id": "test",
+  "title": "Test V 1.2 on your phone",
+  "detail": "Sign up, accept the 18+ screen, list an item, browse Everywhere and the 1/10/25 km filters, share an item to WhatsApp, swap with a second account, report someone, then delete a test account."
+ },
+ {
+  "id": "pages",
+  "title": "Put the web pages online at a neutral address",
+  "detail": "Privacy, terms, delete-account and shared-item pages. Sign up for Vercel's free plan (no card) so Claude can host them without your GitHub name, or use GitHub Pages from /docs."
+ },
+ {
+  "id": "contact",
+  "title": "Add a contact email",
+  "detail": "Put the address people can write to in docs/site.js. Google Play needs a working contact."
+ },
+ {
+  "id": "auth",
+  "title": "Set Supabase sign-in settings",
+  "detail": "Site URL and redirect URLs to the GitHub Pages address, and a minimum password length of 8."
+ },
+ {
+  "id": "admin",
+  "title": "Make yourself an admin",
+  "detail": "Supabase Table Editor → admin_users → add your user id. Unlocks the Reports screen."
+ },
+ {
+  "id": "key",
+  "title": "Create an upload key",
+  "detail": "Generate it once with keytool and add the four UPLOAD_* secrets to the repo."
+ },
+ {
+  "id": "console",
+  "cost": "$25 one-time",
+  "title": "Register a Google Play developer account",
+  "detail": "Play Console sign-up and identity check."
+ },
+ {
+  "id": "aab",
+  "title": "Build the Play bundle and start a closed test",
+  "detail": "Run \"Build for Google Play (AAB)\". New personal accounts need 12 testers for 14 days before production."
+ },
+ {
+  "id": "listing",
+  "title": "Fill in the store listing and Data safety form",
+  "detail": "Screenshots, description, content rating, target audience 18+, and the privacy policy link."
+ },
+ {
+  "id": "playlive",
+  "title": "Switch on the Google Play button on shared item pages",
+  "detail": "Set PLAY_LIVE to true in docs/site.js once Swap is live on Play."
+ },
+ {
+  "id": "launch",
+  "title": "Release to production",
+  "detail": "Submit for review and roll out Swap on Google Play."
+ }
 ]

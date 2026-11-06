@@ -41,6 +41,17 @@
     "New server functions: delete-account and nightly maintenance",
     "Notifications function redeployed with channel targeting"
    ]
+  },
+  {
+   "after": "6fd07af",
+   "branch": "pre-playstore-audit",
+   "date": "2026-11-07T00:55:00+05:30",
+   "title": "Search, sharing and update-link changes applied to the live backend",
+   "items": [
+    "Database migration 0012: browse every item with distances, public item previews for shared links",
+    "New server function app-download: updates download through Swap's own address",
+    "Release check redeployed; the current release link no longer points to GitHub"
+   ]
   }
  ],
  "project": {
